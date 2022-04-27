@@ -22,3 +22,21 @@ class Match:
 
     def get_match(self):
         return ([self.player1,self.resultplayer1],[self.player2,self.resultplayer2])
+
+    def get_resultplayer1(self):
+        return self.resultplayer1
+
+    def get_resultplayer2(self):
+        return self.resultplayer2
+
+    def get_player1(self):
+        return self.player1
+        
+    def get_player2(self):
+        return self.player2
+
+    def set_resultplayer1(self,result):
+        self.resultplayer1 = result
+
+    def set_resultplayer2(self,result):
+        self.resultplayer2 = result

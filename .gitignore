@@ -1,3 +1,4 @@
 env/
 OCR_PYTHON_P4.code-workspace
 *.bak
+__pycache__/

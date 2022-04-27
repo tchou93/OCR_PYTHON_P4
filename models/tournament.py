@@ -1,13 +1,13 @@
 from typing import List
-from player import Player
-from tour import Tour
-from match import Match
+from models.player import Player
+from models.tour import Tour
+from models.match import Match
 
 
 class Tournament:
     """Tournament."""
 
-    def __init__(self, name, place, date, time_control, description ):
+    def __init__(self, name, place, date, time_control, description):
         """Has a presentation for the tournament."""
         self.name = name
         self.place = place
@@ -21,22 +21,36 @@ class Tournament:
         
     def __str__(self):
         """Used in print."""
-        return f"nom du tournoi : {self.name}, Lieu : {self.place}, Les joueurs : {self.players}, contrôle de temps :{self.time_control}, Description :{self.description}"
+        description_tournament = f"nom du tournoi : {self.name}, Lieu : {self.place}, Voici les joueurs : \n"
+        num_player=1
+        for player in self.players:
+            description_tournament += f"joueur {num_player} :\n" 
+            description_tournament += str(player)
+            num_player += 1 
+        description_tournament += f"\n contrôle de temps : {self.time_control}, Description : {self.description}"
+        return description_tournament
 
     def add_player(self, player):
-        self.players.add(player)
+        self.players.append(player)
 
-    def add_tour(self, tour):
-        number_of_tour_players = 0
+    def add_tour(self):
+        tour = Tour(f"Round {len(self.tours)+1}")
+        number_of_players_in_tour = 0
         index = 0
         if (len(self.tours) == 0):
-            number_of_tour_players = len(self.players)
-            while index < number_of_tour_players:
-                Match(self.players[index],self.players[index+1])
+            number_of_players_in_tour = len(self.players)
+            while index < number_of_players_in_tour:
+                tour.add_match(Match(self.players[index],self.players[index+1]))
                 index +=2 
         else:
-            number_of_tour_players = self.tours[len(self.tours)-1]
-            self.tours
-
-
-        # self.tours.add(tour)
+            player_wins=[]
+            for match in tour.matchs[len(tour.matchs)-1]:
+                if match.get_resultplayer1 > match.get_resultplayer2:
+                    player_wins.add(match.get_player1)
+                else:
+                    player_wins.add(match.get_player2)
+            number_of_players_in_tour = len(player_wins)
+            while index < number_of_players_in_tour:
+                tour.add_match(Match(player_wins[index],player_wins[index+1]))
+                index +=2 
+        (self.tours).add(tour)

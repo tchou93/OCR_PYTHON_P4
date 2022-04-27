@@ -23,4 +23,4 @@ class Tour:
         return self.finish_time
 
     def add_match(self, match):
-        self.matchs.add(match)
+        self.matchs.append(match)
