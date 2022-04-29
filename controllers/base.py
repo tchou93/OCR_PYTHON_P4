@@ -3,6 +3,7 @@ from typing import List
 from models.player import Player
 from models.tour import Tour
 from models.tournament import Tournament
+import random
 
 class Controller:
     """Main controller."""
@@ -22,23 +23,38 @@ class Controller:
             #     return
             player = Player(info_player["fist_name"], info_player["last_name"], info_player["birthday"], info_player["gender"])
             self.tournament.add_player(player)
-        print(self.tournament)
-        # for player in self.players:
-        #     print(player)
 
-    # def add_result_tour(self,number_of_players):
-    #     result_tour = self.view.prompt_for_result_tour
-
-
+    def create_tournament_simu(self):
+        self.tournament = Tournament("Tournoi1","Sevran","28/04/2022","control1","description 1")
+        player1 = Player("Tan", "TRAN", "03/10/1985", "M")
+        player2 = Player("Tan1", "TRAN1", "04/10/1985", "A")
+        player3 = Player("Tan2", "TRAN2", "05/10/1985", "B")
+        player4 = Player("Tan3", "TRAN3", "06/10/1985", "C")
+        player5 = Player("Tan4", "TRAN4", "07/10/1985", "D")
+        player6 = Player("Tan5", "TRAN5", "08/10/1985", "E")
+        player7 = Player("Tan6", "TRAN6", "09/10/1985", "F")
+        player8 = Player("Tan7", "TRAN7", "10/10/1985", "G")
+        self.tournament.add_player(player1)
+        self.tournament.add_player(player2)
+        self.tournament.add_player(player3)
+        self.tournament.add_player(player4)
+        self.tournament.add_player(player5)
+        self.tournament.add_player(player6)
+        self.tournament.add_player(player7)
+        self.tournament.add_player(player8)
 
     def run(self):
-        self.create_tournament()
-        self.add_players(2)
-        self.tournament.add_tour()
+        #Test for tournament without View
+        self.create_tournament_simu()
+        #Set some random ranks
+        for player in self.tournament.players:
+            player.set_ranking(random.randint(1,10000))
 
-
-    # def show_ranking(self):
-    # def show_games(self):
-    # def show_reports(self):
-    # def prompt_for_data_save(self):
-    # def prompt_for_data_load(self):
+        #Create all the tours and simulate the winners of each match
+        for number_of_tour in range(8):
+            self.tournament.add_tour()
+            for match in self.tournament.tours[len(self.tournament.tours)-1].matchs:
+                match.set_resultplayer1(random.randint(0,50))
+                match.set_resultplayer2(random.randint(0,50))
+                match.calc_results()
+            print(self.tournament)

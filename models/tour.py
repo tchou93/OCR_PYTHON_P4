@@ -10,6 +10,14 @@ class Tour:
         self.matchs: List[Match] = []
         self.name = name
 
+    def __str__(self):
+        """Used in print."""
+        str_matchs = ""
+        for match in self.matchs:
+            str_matchs += str(match) +" "
+        str_matchs += "\n"
+        return str_matchs
+
     def set_start_time(self):
         self.start_time = time.strftime("%A %d %B %Y %H:%M:%S")
 
@@ -24,3 +32,5 @@ class Tour:
 
     def add_match(self, match):
         self.matchs.append(match)
+
+        
