@@ -51,7 +51,7 @@ class Controller:
             player.set_ranking(random.randint(1,10000))
 
         #Create all the tours and simulate the winners of each match
-        for number_of_tour in range(8):
+        for number_of_tour in range(4):
             self.tournament.add_tour()
             for match in self.tournament.tours[len(self.tournament.tours)-1].matchs:
                 match.set_resultplayer1(random.randint(0,50))

@@ -10,7 +10,9 @@ class Match:
         self.player2: Player = player2
         self.resultplayer1 = 0
         self.resultplayer2 = 0
-
+        self.player1.add_already_played(player2)
+        self.player2.add_already_played(player1)
+        
     def __str__(self):
         """Used in print."""
         if (self.resultplayer1 > self.resultplayer2):
@@ -41,6 +43,8 @@ class Match:
     # def get_player2(self):
     #     return self.player2
     
+
+    #Faire une fonction pour gagner, perdre, égalité
     def calc_results(self):
         if (self.resultplayer1 > self.resultplayer2):
             self.player1.update_score(1)

@@ -8,7 +8,8 @@ class Player:
         self.birthday = birthday
         self.gender = gender
         self.ranking = 0
-        self.score = 0       
+        self.score = 0
+        self.players_name_already_played = []
 
     def __str__(self):
         """Used in print."""
@@ -17,8 +18,13 @@ class Player:
     def set_ranking(self, newrank):
         self.ranking = newrank
 
+#   Faire une fonction pour gagner, perdre, égalité
     def update_score(self, newscore):
         self.score += newscore
 
     def get_score(self):
         return self.score
+
+    def add_already_played(self, player):
+        self.players_name_already_played.append(player)
+
