@@ -4,6 +4,6 @@ from views.base import View
 def main():
     view = View()
     controller = Controller(view)
-    controller.run()
+    controller.menu()
 
 main()

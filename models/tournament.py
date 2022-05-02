@@ -66,8 +66,7 @@ class Tournament:
             players_name_already_tmp = []
             for players_name_already_played in player.players_name_already_played:
                 players_name_already_tmp.append(players_name_already_played.first_name)
-            description_tournament += "\t\t"+  player.first_name + " a déjà joué avec : "+ str(players_name_already_tmp) + "\n"
-        description_tournament +="\n"
+            # description_tournament += "\t\t"+  player.first_name + " a déjà joué avec : "+ str(players_name_already_tmp) + "\n"
 
         return description_tournament
 
@@ -114,7 +113,7 @@ class Tournament:
             while len(list_of_players_sort) != 0:
                 index = 1
                 while list_of_players_sort[index] in list_of_players_sort[0].players_name_already_played :
-                    print(f"{list_of_players_sort[0].first_name} a déjà joué avec {list_of_players_sort[index].first_name}")
+                    # print(f"{list_of_players_sort[0].first_name} a déjà joué avec {list_of_players_sort[index].first_name}")
                     if (index == (len(list_of_players_sort)-1)):
                         print("break")
                         break
