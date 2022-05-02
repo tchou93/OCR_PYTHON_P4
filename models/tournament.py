@@ -113,12 +113,12 @@ class Tournament:
             list_of_players_sort = self.players_scores_sort(self.players)
             while len(list_of_players_sort) != 0:
                 index = 1
-                # print("ici")
                 while list_of_players_sort[index] in list_of_players_sort[0].players_name_already_played :
-                    print("test passed !!!!!")
                     print(f"{list_of_players_sort[0].first_name} a déjà joué avec {list_of_players_sort[index].first_name}")
+                    if (index == (len(list_of_players_sort)-1)):
+                        print("break")
+                        break
                     index += 1
-
                 tour.add_match(Match(list_of_players_sort[0],list_of_players_sort[index]))
                 player1 = list_of_players_sort[0]
                 player2 = list_of_players_sort[index]

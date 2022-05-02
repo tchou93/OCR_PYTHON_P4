@@ -35,26 +35,32 @@ class Controller:
         player7 = Player("Tan6", "TRAN6", "09/10/1985", "F")
         player8 = Player("Tan7", "TRAN7", "10/10/1985", "G")
         self.tournament.add_player(player1)
+        self.tournament.add_player(player4)
+        self.tournament.add_player(player8)
         self.tournament.add_player(player2)
         self.tournament.add_player(player3)
-        self.tournament.add_player(player4)
         self.tournament.add_player(player5)
         self.tournament.add_player(player6)
         self.tournament.add_player(player7)
-        self.tournament.add_player(player8)
 
     def run(self):
         #Test for tournament without View
         self.create_tournament_simu()
+
+
         #Set some random ranks
         for player in self.tournament.players:
             player.set_ranking(random.randint(1,10000))
 
-        #Create all the tours and simulate the winners of each match
-        for number_of_tour in range(4):
+        #Create all the tours and simulate the winners of each match]
+        for number_of_tour in range(3):
             self.tournament.add_tour()
             for match in self.tournament.tours[len(self.tournament.tours)-1].matchs:
-                match.set_resultplayer1(random.randint(0,50))
-                match.set_resultplayer2(random.randint(0,50))
-                match.calc_results()
+                match.results_match(random.randint(0,2))
             print(self.tournament)
+
+        self.view.show_list_of_players_by_ranks(self.tournament.players)
+        self.view.show_list_of_players_by_alphabetical_order(self.tournament.players)
+        self.view.show_info_tournament(self.tournament)
+        # self.view.show_info_tournament(self.tournament.tours)
+        # self.view.show_info_tournament(self.tournament.

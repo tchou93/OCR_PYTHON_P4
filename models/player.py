@@ -18,9 +18,14 @@ class Player:
     def set_ranking(self, newrank):
         self.ranking = newrank
 
-#   Faire une fonction pour gagner, perdre, égalité
-    def update_score(self, newscore):
-        self.score += newscore
+    def win(self):
+        self.score += 1
+
+    def lost(self):
+        self.score += 0
+
+    def draw(self):
+        self.score += 0.5
 
     def get_score(self):
         return self.score
