@@ -12,7 +12,7 @@ class Tour:
 
     def __str__(self):
         """Used in print."""
-        str_matchs = ""
+        str_matchs = f"Round {self.name} : "
         for match in self.matchs:
             str_matchs += str(match) +" "
         str_matchs += "\n"

@@ -22,12 +22,12 @@ class Tournament:
         self.name = name
         self.place = place
         self.date = date
-        self.tours_number = 4
-        self.tours: List[Tour] = []
-        self.players: List[Player] = []
+        self.tours_number = tour_number
+        self.tours = [] if tours is None else tours
+        self.players: List[Player] = [] if players is None else players
         self.time_control = time_control
         self.description = description
-
+        self.finished = False
 
     # def __repr__(self):
     #     return self.name
@@ -43,6 +43,10 @@ class Tournament:
     #     description_tournament += f"\t\tVoici les Tours :\n"
 
     def __str__(self):
+        description_tournament = f"Nom du tournoi : {self.name}, Lieu : {self.place}, contrôle de temps : {self.time_control}, Description : {self.description} \n"
+        return description_tournament
+
+    def print_tournament(self):
         """Used in print."""
         description_tournament = f"Nom du tournoi : {self.name}, Lieu : {self.place}, contrôle de temps : {self.time_control}, Description : {self.description} \n"
         description_tournament += f"\tVoici les joueurs du tournoi:\n"
@@ -68,7 +72,7 @@ class Tournament:
                 players_name_already_tmp.append(players_name_already_played.first_name)
             # description_tournament += "\t\t"+  player.first_name + " a déjà joué avec : "+ str(players_name_already_tmp) + "\n"
 
-        return description_tournament
+        print(description_tournament)
 
     def add_player(self, player):
         self.players.append(player)
@@ -115,7 +119,7 @@ class Tournament:
                 while list_of_players_sort[index] in list_of_players_sort[0].players_name_already_played :
                     # print(f"{list_of_players_sort[0].first_name} a déjà joué avec {list_of_players_sort[index].first_name}")
                     if (index == (len(list_of_players_sort)-1)):
-                        print("break")
+                        # print("break")
                         break
                     index += 1
                 tour.add_match(Match(list_of_players_sort[0],list_of_players_sort[index]))
