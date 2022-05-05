@@ -7,7 +7,7 @@ class Player:
         self.last_name = last_name
         self.birthday = birthday
         self.gender = gender
-        self.ranking = 0
+        self.ranking = "TBD"
         self.score = 0
         self.players_name_already_played = []
 

@@ -111,8 +111,8 @@ class Tournament:
             while index < (number_of_players_in_tour/2):
                 tour.add_match(Match(list_of_players_sort[index],list_of_players_sort[index+int(number_of_players_in_tour/2)]))
                 index += 1
-            # tour = self.get_first_tour()
-        else:
+            self.tours.append(tour)
+        elif self.finished == False:
             list_of_players_sort = self.players_scores_sort(self.players)
             while len(list_of_players_sort) != 0:
                 index = 1
@@ -127,4 +127,8 @@ class Tournament:
                 player2 = list_of_players_sort[index]
                 list_of_players_sort.remove(player1)
                 list_of_players_sort.remove(player2)
-        self.tours.append(tour)
+            self.tours.append(tour)
+            print(len(self.tours))
+            print(self.tours_number)
+            if len(self.tours) == self.tours_number:
+                self.finished = True
