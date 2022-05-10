@@ -18,7 +18,7 @@ class Controller:
         self.tournament_active:Tournament = None
         self.tournament_simu:Tournament = None
         self.tour_active:Tour = None
-
+        self.db = TinyDB('db_chess_tournament.json')
     #####################
     # Function for menu
     #####################
@@ -27,19 +27,17 @@ class Controller:
         if (user_input_menu_main == 1):
             self.option_tournament()
         elif (user_input_menu_main == 2):
-            self.option_menu_main() #TBD
+            self.clear_all_tab_in_db()
+            self.option_save_to_db()
+            self.option_menu_main()
         elif (user_input_menu_main == 3):
-            self.option_menu_main() #TBD
+            self.option_load_from_db() #To be update
+            self.option_menu_main()
         elif (user_input_menu_main == 4):
             self.option_reports()
         elif (user_input_menu_main == 5):
             self.simu1()
             self.option_menu_main()
-
-    def option_save_players_in_db(self):
-        self.save_serialized_players_in_db(self.serialized_players_in_tournament(self.tournaments[0]))
-        self.display_save_in_database_done()
-        self.prompt_for_continue()
 
     def option_tournament(self):
         user_input_menu_option_tournament= self.view.display_menu_tournament()
@@ -56,7 +54,8 @@ class Controller:
         if (user_input_menu_option_reports == 1):
             self.option_reports_detailed_tournament()
         elif (user_input_menu_option_reports == 2):
-            self.option_reports() #TBD
+            self.option_reports_all_tournament()
+            self.option_reports()
         else:
             self.option_menu_main()
 
@@ -65,12 +64,21 @@ class Controller:
         if (user_input_menu_tournament_reports == 1):
             self.option_reports_detailed_tournament() #TBD
         elif (user_input_menu_tournament_reports == 2):
-            self.option_reports_detailed_tournament() #TBD
+            self.option_reports_detailed_tournament()
         elif (user_input_menu_tournament_reports == 3):
             self.option_reports_detailed_tournament() #TBD
         else:
             self.option_reports()
-            
+
+    def option_reports_all_tournament(self):
+        user_input_menu_reports_all_tournament= self.view.display_menu_report_choose_tournament(self.tournaments)
+        if user_input_menu_reports_all_tournament < len(self.tournaments) + 1:
+            self.view.display_all_information_tournament(self.tournaments[user_input_menu_reports_all_tournament-1])
+            self.view.prompt_for_continue()
+        else:
+            self.option_tournament()
+
+
     def option_choose_tournament(self):
         tournaments_in_progress = self.tournaments_in_progress()
         user_input_menu_option_tournament = self.view.display_menu_choose_tournament(tournaments_in_progress)
@@ -83,6 +91,7 @@ class Controller:
     def option_tournament_action(self):
         user_input_menu_tournament_action = self.view.display_menu_tournament_action(self.tournament_active)
         self.view.display_all_information_tournament(self.tournament_active)
+        # self.tour_active = self.tour_to_play()
         if user_input_menu_tournament_action == 1:
             self.option_add_a_round()
             self.option_tournament_action()
@@ -134,11 +143,16 @@ class Controller:
             elif self.first_match_in_current_tour(match_to_play):
                 self.tour_active.set_start_time()
       
-  
     def match_to_play(self):
         for match in self.tour_active.matchs:
             if not match.finish:
                 return match
+        return None
+
+    def tour_to_play(self):
+        for tour in self.tour_active.tours:
+            if not tour.finish:
+                return tour
         return None
 
     def first_match_in_current_tour(self,match:Match):
@@ -161,21 +175,21 @@ class Controller:
     #######################
 
     def option_create_tournament(self):
-        # list_input_infos_tournament = self.view.prompt_for_create_tournament()
-        # new_tournament = Tournament(list_input_infos_tournament[0],list_input_infos_tournament[1],list_input_infos_tournament[2],list_input_infos_tournament[3])
+        list_input_infos_tournament = self.view.prompt_for_create_tournament()
+        new_tournament = Tournament(list_input_infos_tournament[0],list_input_infos_tournament[1],list_input_infos_tournament[2],list_input_infos_tournament[3])
         
-        # list_info_players = self.view.prompt_for_add_players(int(list_input_infos_tournament[4]))
-        # for list_info_player in list_info_players:
-        #     player = Player(list_info_player[0], list_info_player[1], list_info_player[2], list_info_player[3],list_info_player[4])
-        #     new_tournament.add_player(player)
-        # self.tournaments.append(new_tournament)
-        # self.view.terminal_clear()
-        # self.view.display_player_rank_score(new_tournament)
-        # self.view.prompt_for_continue()
+        list_info_players = self.view.prompt_for_add_players(int(list_input_infos_tournament[4]))
+        for list_info_player in list_info_players:
+            player = Player(list_info_player[0], list_info_player[1], list_info_player[2], list_info_player[3],list_info_player[4])
+            new_tournament.add_player(player)
+        self.tournaments.append(new_tournament)
+        self.view.terminal_clear()
+        self.view.display_player_rank_score(new_tournament)
+        self.view.prompt_for_continue()
 
-        self.simu_create_tournament2()
-        self.simu_add_players2()
-        self.simu_update_ranks(self.tournaments[0].players)
+        # self.simu_create_tournament2()
+        # self.simu_add_players2()
+        # self.simu_update_ranks(self.tournaments[0].players)
 
     def tournaments_in_progress(self):
         tournaments_in_progress = []
@@ -191,29 +205,84 @@ class Controller:
     # Function for data base
     ########################
 
-    def serialized_players_in_tournament(self, tournament : Tournament):
-        serialized_players = []
-        players = tournament.players
-        for player in players:
-            serialized_players.append(player.serialized)
-        return serialized_players
+    def serialized_items(self, items):
+        serialized = []
+        for item in items:
+            serialized.append(item.serialized())
+        return serialized
 
-    def deserialized_players(self, serialized_players) -> List[Player]:
+    def deserialized_players(self, serialized_players):
         players = []
         for serialized_player in serialized_players:
             players.append(Player.deserialized(serialized_player))
         return players
 
-    def save_serialized_players_in_db(self, serialized_players):
-        db = TinyDB('db_chess_tournament.json')
-        players_table = db.table('players')
-        players_table.truncate()	# clear the table first
-        players_table.insert_multiple(serialized_players)
+    def deserialized_matchs(self, serialized_matchs, players: List[Player]):
+        matchs = []
+        for serialized_match in serialized_matchs:
+            matchs.append(Match.deserialized(serialized_match, players))
+        return matchs
 
-    def load_serialized_players_from_db(self):
-        db = TinyDB('db_chess_tournament.json')
-        players_table = db.table('players')
-        return players_table.all()
+    def deserialized_tours(self, serialized_tours, matchs: List[Match]):
+        tours = []
+        for serialized_tour in serialized_tours:
+            tours.append(Tour.deserialized(serialized_tour, matchs))
+        return tours
+
+    def deserialized_tournaments(self, serialized_tournaments, tours: List[Tour], players: List[Player]):
+        tournaments = []
+        for serialized_tournament in serialized_tournaments:
+            tournaments.append(Tournament.deserialized(serialized_tournament, tours, players))
+        return tournaments
+
+    def option_save_in_db(self, serialized_items, table_name):
+        self.save_serialized_in_db(serialized_items,table_name)
+        self.view.display_save_in_database_done()
+
+    def save_serialized_in_db(self, serialized_items,table_name):
+        table_items = self.db.table(table_name)
+        # table_items.truncate()	# clear the table first
+        table_items.insert_multiple(serialized_items)
+    
+        #     players = self.deserialized_players(self.load_serialized_from_db("player"))
+        # matchs = self.deserialized_matchs(self.load_serialized_from_db("match"), players)
+        # tours = self.deserialized_tours(self.load_serialized_from_db("tour"), matchs)
+        # tournaments = self.deserialized_tournaments(self.load_serialized_from_db("tournament"), tours, players)
+        
+    def clear_all_tab_in_db(self):
+        self.db.drop_tables()
+
+    def load_serialized_from_db(self,table_name):
+        load_table = self.db.table(table_name)
+        return load_table.all()
+
+    # def option_load_from_db(self, table_name):
+    #     self.players_in_db = self.deserialized_items(self.load_serialized_from_db(table_name))
+    #     self.view.terminal_clear()
+    #     self.view.display_player_rank_score_2(self.players_in_db)
+    #     self.view.prompt_for_continue()
+
+    def option_load_from_db(self):
+        players = self.deserialized_players(self.load_serialized_from_db("player"))
+        matchs = self.deserialized_matchs(self.load_serialized_from_db("match"), players)
+        tours = self.deserialized_tours(self.load_serialized_from_db("tour"), matchs)
+        tournaments = self.deserialized_tournaments(self.load_serialized_from_db("tournament"), tours, players)
+        self.view.display_all_information_tournament(tournaments[0])
+        self.tournaments = tournaments
+        self.view.prompt_for_continue()
+
+    def option_save_to_db(self):
+        self.option_save_in_db(self.serialized_items(self.tournaments), "tournament") #To be update
+        for tournament in self.tournaments:
+            self.option_save_in_db(self.serialized_items(tournament.tours), "tour") #To be update
+            self.option_save_in_db(self.serialized_items(tournament.players), "player") #To be update
+            for tour in tournament.tours:
+                self.option_save_in_db(self.serialized_items(tour.matchs), "match") #To be update
+        self.view.prompt_for_continue()
+        # players = self.deserialized_players(players_serialized)
+        # matchs = self.
+        # tours_serialized
+        # tournaments
 
     ##########################
     # Function for SIMU part
@@ -238,11 +307,11 @@ class Controller:
         self.tournament_simu = None
 
     def simu_create_tournament1(self):
-        tournament = Tournament("Tournoi Démo 1","Paris","Bullet","Description du tounoi de démonstration 1")
+        tournament = Tournament("Tournoi Demo 1","Paris","Bullet","Description du tounoi de demonstration 1")
         self.tournament_simu = tournament
 
     def simu_create_tournament2(self):
-        tournament = Tournament("Tournoi Démo 2","Paris","Bullet","Description du tounoi de démonstration 1")
+        tournament = Tournament("Tournoi Demo 2","Paris","Bullet","Description du tounoi de demonstration 1")
         self.tournaments.append(tournament)
 
     def simu_add_players2(self): 

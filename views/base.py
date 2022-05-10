@@ -138,6 +138,12 @@ class View:
         else:
             return (user_input_option,-1)
  
+    def display_menu_report_choose_tournament(self, tounaments: List[Tournament]):
+        items = []
+        for tournament in tounaments:
+            items.append(f"{tournament.name} (Round {len(tournament.tours)}/{tournament.tours_number})")
+        items.append("Retour au menu tournoi")
+        return (self.display_menu_generic("Choisir un tournoi",items))
 
     ################################
     # Function for display message
@@ -208,6 +214,7 @@ class View:
         table = []
         table_header = ['Tour','Début','Fin','Match','Statut']
         table.append(table_header)
+        test= ""
         for tour in tours:
             matchs_display = ""
             for match in tour.matchs:
@@ -219,7 +226,7 @@ class View:
             table_body =[tour.name,tour.start_time,tour.end_time,matchs_display,status_tour]
             table.append(table_body)
         print(tabulate(table,headers="firstrow",tablefmt="grid"))
-        return str(tabulate(table,headers="firstrow",tablefmt="grid")+"\n")
+        return str(tabulate(table,headers="firstrow",tablefmt="grid") +"\n")
 
     def display_player_rank_score(self, tournament:Tournament):
         players_sorted_rank = sorted(tournament.players, key=lambda p: p.ranking)
@@ -237,6 +244,18 @@ class View:
         print(f"Nom du tournoi : {tournament.name} | Lieu : {tournament.place} | Date début: {tournament.date_begin} | Date fin: {tournament.date_end}")
         print(f"contrôle de temps : {tournament.time_control} | Description : {tournament.description} | Round {len(tournament.tours)}/{tournament.tours_number}")
         return f"Nom du tournoi : {tournament.name} | Lieu : {tournament.place} | Date début: {tournament.date_begin} | Date fin: {tournament.date_end}\n" + f"contrôle de temps : {tournament.time_control} | Description : {tournament.description} | Round {len(tournament.tours)}/{tournament.tours_number}\n"
+
+    def display_player_rank_score_2(self, players:List[Player]):
+        players_sorted_rank = sorted(players, key=lambda p: p.ranking)
+        players_sorted_rank_score = sorted(players_sorted_rank, key=lambda p: p.score,reverse=True)
+        table = []
+        table_header = ['Joueur','Classement', 'Score']
+        table.append(table_header)
+        for player in players_sorted_rank_score:
+            table_body = [f"{player.first_name} {player.last_name}", player.ranking, player.score]
+            table.append(table_body)
+        print(tabulate(table,headers="firstrow",tablefmt="grid"))
+        return str(tabulate(table,headers="firstrow",tablefmt="grid"))
 
     #############################
     # Function diverse

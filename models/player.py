@@ -1,9 +1,10 @@
 from typing import List
+from uuid import uuid4
 
 class Player:
     """Player."""
 
-    def __init__(self, first_name:str, last_name:str, birthday:str, gender:str, ranking=0 ,score=0):
+    def __init__(self, first_name:str, last_name:str, birthday:str, gender:str, ranking=0 ,score=0, players_already_played=None, id=None):
         """Constructeur de la classe Player"""
         self.first_name = first_name
         self.last_name = last_name
@@ -11,7 +12,8 @@ class Player:
         self.gender = gender
         self.ranking = ranking
         self.score = score
-        self.players_already_played : List[Player]= []
+        self.players_already_played: List[int] =  [] if players_already_played is None else players_already_played
+        self.id = str(uuid4()) if id is None else id
 
     def __repr__(self):
         """Utiliser pour avoir une représentation avec la fontion print"""
@@ -29,24 +31,30 @@ class Player:
         """ Ajoute 0.5 au score si le joueur fait égalité """
         self.score += 0.5
 
-    def add_already_played(self, player):
+    def add_already_played(self, index_player):
         """ Ajouter le player à la liste des joueurs déjà rencontré durant le tournoi """
-        self.players_already_played.append(player)
+        self.players_already_played.append(index_player)
 
-    def serialized(self, player):
+    def serialized(self):
         serialized_player = {
-            'first_name' : player.first_name,
-            'last_name' : player.last_name,
-            'birthday': player.birthday,
-            'gender' : player.gender,
-            'ranking' : player.ranking
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'birthday': self.birthday,
+            'gender': self.gender,
+            'ranking': self.ranking,
+            'score': self.score,
+            'players_already_played': self.players_already_played,
+            'id': self.id
         }
         return serialized_player 
 
-    def deserialized(self, serialized_player):
+    def deserialized(serialized_player):
         first_name = serialized_player['first_name']
         last_name = serialized_player['last_name']
         birthday = serialized_player['birthday']
         gender = serialized_player['gender']
         ranking = serialized_player['ranking']
-        return Player(first_name,last_name,birthday,gender,ranking)
+        score = serialized_player['score']
+        players_already_played = serialized_player['players_already_played']
+        id = serialized_player['id']
+        return Player(first_name,last_name,birthday,gender,ranking,score,players_already_played,id)
