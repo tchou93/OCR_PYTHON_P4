@@ -16,6 +16,7 @@ class View:
     def display_menu_generic(self, menu_title, menu_options):
         while 1:
             self.terminal_clear()
+            self.display_banner()
             index = 1
             list_option_str = []
             print(f"|{menu_title}|")
@@ -64,18 +65,26 @@ class View:
         menu_reports = [
             "Rapport détaillé sur un tournoi",
             "Liste des tournois",
+            "Liste des acteurs",
             "Retour au menu principal"
         ]
         return self.display_menu_generic("Rapports",menu_reports)
 
-    def display_menu_tournament_reports(self):
+    def display_menu_tournament_reports(self,tournament_name : str):
         menu_tournament_reports = [
             "Joueurs du tournoi",
             "Liste des tours du tournoi",
-            "Liste des matchs du tournoi",
-            "Retour au menu des rapports"
+            "Retour au menu choisir un tournoi"
         ]
-        return self.display_menu_generic("Rapport détaillé sur un tournoi",menu_tournament_reports)
+        return self.display_menu_generic(f"Rapport détaillé sur le tournoi \"{tournament_name}\":",menu_tournament_reports)
+
+    def display_menu_players_in_tournament_reports(self,tournament_name : str):
+        menu_tournament_reports = [
+            "Liste de tous les joueurs par ordre alphabétique",
+            "Liste de tous les joueurs par classement",
+            f"Retour au menu des rapports détaillés du tournoi \"{tournament_name}\""
+        ]
+        return self.display_menu_generic(f"Rapport joueurs du tournoi \"{tournament_name}\":",menu_tournament_reports)
 
     def display_menu_choose_tournament(self, tournaments_in_progress: List[Tournament]):
         items = []
@@ -89,7 +98,7 @@ class View:
             "Ajouter un round",
             "Jouer un match",
             "Modifier le classement d’un joueur",
-            "Retour au menu des tournois"
+            "Retour au menu tournoi"
         ]
         header_menu_tournament_action = self.display_all_information_tournament(tournament)
         return self.display_menu_generic(header_menu_tournament_action,menu_create_tournament)
@@ -142,8 +151,9 @@ class View:
         items = []
         for tournament in tounaments:
             items.append(f"{tournament.name} (Round {len(tournament.tours)}/{tournament.tours_number})")
-        items.append("Retour au menu tournoi")
+        items.append("Retour au menu rapport")
         return (self.display_menu_generic("Choisir un tournoi",items))
+
 
     ################################
     # Function for display message
@@ -160,13 +170,18 @@ class View:
         self.terminal_clear()
         print("Le tour n'est pas encore terminé")
 
-    def display_save_in_database_done(self):
+    def display_save_to_database_done(self):
         self.terminal_clear()
-        print("La sauvegarde dans la base de donnée a été effectué dans le fichier db_chess_tournament.json")
+        print("La sauvegarde dans la base de donnée a été effectuée dans le fichier db_chess_tournament.json")
 
-    def display_load_in_database_done(self):
+    def display_load_from_database_done(self):
         self.terminal_clear()
-        print("Le chargement de la base de donnée a été effectué à partir du fichier db_chess_tournament.json ")
+        print("Le chargement de la base de donnée a été effectuée à partir du fichier db_chess_tournament.json ")
+
+    def display_load_from_database_error(self):
+        self.terminal_clear()
+        print("Le chargement de la base de donnée n'a pas pu se faire, vide? erronée?")
+
 
     #####################
     # Function for prompt
@@ -206,8 +221,8 @@ class View:
     def display_all_information_tournament(self, tournament:Tournament):
         display_tournament = self.display_tournament(tournament)
         display_tour = self.display_tour(tournament)
-        display_player_rank_score = self.display_player_rank_score(tournament)
-        return display_tournament + display_tour + display_player_rank_score
+        display_player_sorted_by_rank_score = self.display_player_sorted_by_rank_score(tournament.players)
+        return display_tournament + display_tour + display_player_sorted_by_rank_score
 
     def display_tour(self, tournament:Tournament):
         tours : List[Tour] = tournament.tours
@@ -228,24 +243,7 @@ class View:
         print(tabulate(table,headers="firstrow",tablefmt="grid"))
         return str(tabulate(table,headers="firstrow",tablefmt="grid") +"\n")
 
-    def display_player_rank_score(self, tournament:Tournament):
-        players_sorted_rank = sorted(tournament.players, key=lambda p: p.ranking)
-        players_sorted_rank_score = sorted(players_sorted_rank, key=lambda p: p.score,reverse=True)
-        table = []
-        table_header = ['Joueur','Classement', 'Score']
-        table.append(table_header)
-        for player in players_sorted_rank_score:
-            table_body = [f"{player.first_name} {player.last_name}", player.ranking, player.score]
-            table.append(table_body)
-        print(tabulate(table,headers="firstrow",tablefmt="grid"))
-        return str(tabulate(table,headers="firstrow",tablefmt="grid"))
-
-    def display_tournament(self, tournament:Tournament):
-        print(f"Nom du tournoi : {tournament.name} | Lieu : {tournament.place} | Date début: {tournament.date_begin} | Date fin: {tournament.date_end}")
-        print(f"contrôle de temps : {tournament.time_control} | Description : {tournament.description} | Round {len(tournament.tours)}/{tournament.tours_number}")
-        return f"Nom du tournoi : {tournament.name} | Lieu : {tournament.place} | Date début: {tournament.date_begin} | Date fin: {tournament.date_end}\n" + f"contrôle de temps : {tournament.time_control} | Description : {tournament.description} | Round {len(tournament.tours)}/{tournament.tours_number}\n"
-
-    def display_player_rank_score_2(self, players:List[Player]):
+    def display_player_sorted_by_rank_score(self, players:List[Player]):
         players_sorted_rank = sorted(players, key=lambda p: p.ranking)
         players_sorted_rank_score = sorted(players_sorted_rank, key=lambda p: p.score,reverse=True)
         table = []
@@ -257,8 +255,60 @@ class View:
         print(tabulate(table,headers="firstrow",tablefmt="grid"))
         return str(tabulate(table,headers="firstrow",tablefmt="grid"))
 
+    def display_player_sorted_by_rank(self, players:List[Player],tournament_name:str):
+        players_sorted_rank = sorted(players, key=lambda p: p.ranking)
+        table = []
+        table_header = [f"Joueurs du tournoi \"{tournament_name}\" ranger par classement::",'Classement']
+        table.append(table_header)
+        for player in players_sorted_rank:
+            table_body = [f"{player.first_name} {player.last_name}", player.ranking]
+            table.append(table_body)
+        print(tabulate(table,headers="firstrow",tablefmt="grid"))
+        return str(tabulate(table,headers="firstrow",tablefmt="grid"))
+
+    def display_player_sorted_by_name(self, players:List[Player],tournament_name:str=None):
+        players_sorted_name = sorted(players, key=lambda p: p.first_name)
+        table = []
+        if tournament_name == None:
+            table_header = [f"Acteurs des tournois ranger par ordre alphabétique:"]
+        else:
+            table_header = [f"Joueurs du tournoi \"{tournament_name}\" ranger par ordre alphabétique:"]
+        table.append(table_header)
+        for player in players_sorted_name:
+            table_body = [f"{player.first_name} {player.last_name}"]
+            table.append(table_body)
+        print(tabulate(table,headers="firstrow",tablefmt="grid"))
+        return str(tabulate(table,headers="firstrow",tablefmt="grid"))
+
+    def display_tournaments_sorted_by_name(self, tournaments:List[Tournament]):
+        tournaments_sorted_by_name = sorted(tournaments, key=lambda t: t.name)
+        table = []
+        table_header = ['Tournois ranger par ordre alphabétique']
+        table.append(table_header)
+        for tournament in tournaments_sorted_by_name:
+            table_body = [f"{tournament.name}"]
+            table.append(table_body)
+        print(tabulate(table,headers="firstrow",tablefmt="grid"))
+        return str(tabulate(table,headers="firstrow",tablefmt="grid"))
+
+    def display_tournament(self, tournament:Tournament):
+        print(f"Nom du tournoi : {tournament.name} | Lieu : {tournament.place} | Date début: {tournament.date_begin} | Date fin: {tournament.date_end}")
+        print(f"contrôle de temps : {tournament.time_control} | Description : {tournament.description} | Round {len(tournament.tours)}/{tournament.tours_number}")
+        return f"Nom du tournoi : {tournament.name} | Lieu : {tournament.place} | Date début: {tournament.date_begin} | Date fin: {tournament.date_end}\n" + f"contrôle de temps : {tournament.time_control} | Description : {tournament.description} | Round {len(tournament.tours)}/{tournament.tours_number}\n"
+
+
+
     #############################
     # Function diverse
     #############################
     def terminal_clear(self):
         os.system("cls")
+
+    def display_banner(self):
+        print("♙     ____ _                                                                    ♙")
+        print("♙    / ___| |__   ___  ___ ___   _ __ ___   __ _ _ __   __ _  __ _  ___ _ __    ♙")
+        print("♙   | |   | '_ \ / _ \/ __/ __| | '_ ` _ \ / _` | '_ \ / _` |/ _` |/ _ \ '__|   ♙")
+        print("♙   | |___| | | |  __/\__ \__ \ | | | | | | (_| | | | | (_| | (_| |  __/ |      ♙")
+        print("♙    \____|_| |_|\___||___/___/ |_| |_| |_|\__,_|_| |_|\__,_|\__, |\___|_|      ♙")
+        print("♙                                                            |___/              ♙\n")
+        
