@@ -2,9 +2,9 @@ from typing import List
 from models.player import Player
 from models.tour import Tour
 from models.match import Match
-import random
 import time
 from uuid import uuid4
+import locale
 
 class Tournament:
     """Tournament."""
@@ -22,6 +22,7 @@ class Tournament:
         self.players: List[Player] = [] if players is None else players
         self.finish:bool = finish
         self.id = str(uuid4()) if id is None else id
+        locale.setlocale(locale.LC_ALL, 'fr_FR') 
 
     def __repr__(self):
         """Utiliser pour avoir une représentation avec la fontion print"""
@@ -32,92 +33,61 @@ class Tournament:
         """Ajoute le joueur player au tournoi"""
         self.players.append(player)
 
-    def players_ranks_sort(self, list_of_players:List[Player]) -> List[Player]:
-        """Retourne la liste des joueurs triée en fonction de ranking"""
-        return sorted(list_of_players, key=lambda p: p.ranking)
+    def get_first_tour(self, tour_name):
+        tour = Tour(tour_name)
+        list_of_players_sort_by_ranks = sorted(self.players, key=lambda p: p.ranking)
+        size = int(len(list_of_players_sort_by_ranks)/2)
+        matchs_players = list(zip(list_of_players_sort_by_ranks[:size], list_of_players_sort_by_ranks[size:]))
+        for (player1, player2) in matchs_players:
+            player1.add_already_played_index(self.players.index(player2))
+            player2.add_already_played_index(self.players.index(player1))
+            tour.add_match(Match(player1,player2))
+        return tour
 
-    def players_scores_sort(self, list_of_players:List[Player]) -> List[Player]:
-        """Trie tous les joueurs en fonction de leur nombre total de points """
-        list_of_players_rank_sort = self.players_ranks_sort(list_of_players)
-        return sorted(list_of_players_rank_sort, key=lambda p: p.score,reverse=True)
-
-    # def get_first_tour(self):
-    #     list_of_players_sort = self.players_ranks_sort(self.players)
-    #     size = len(list_of_players_sort)/2
-    #     matchs = zip(list_of_players_sort[:size], list_of_players_sort[size:])
-    #     while index < (number_of_players_in_tour/2):
-    #         tour.add_match(Match(list_of_players_sort[index],list_of_players_sort[index+int(number_of_players_in_tour/2)]))
-    #         index += 1
-    #     return tour
-
-    # def find_index_player(sel, player:Player, players:List[Player]):
-    #     for i in range(len(players)):
-    #         if player == players[i]:
-    #             return i
+    def get_next_tour(self, tour_name):
+        tour = Tour(tour_name)
+        list_of_players_sort_by_ranks = sorted(self.players, key=lambda p: p.ranking)
+        list_of_players_sort_by_scores_ranks = sorted(list_of_players_sort_by_ranks, key=lambda p: p.score,reverse=True)
+        while len(list_of_players_sort_by_scores_ranks) != 0:
+            index = 1
+            list_of_players_already_played_with_player_1 = []
+            for player_already_played_index in list_of_players_sort_by_scores_ranks[0].players_already_played_index:
+                list_of_players_already_played_with_player_1.append(self.players[player_already_played_index])
+            
+            while list_of_players_sort_by_scores_ranks[index] in list_of_players_already_played_with_player_1 :    
+                if (index == (len(list_of_players_sort_by_scores_ranks)-1)):
+                    # Si il reste deux joueurs alors on force le jeu même si ils ont déjà joué ensemble
+                    break
+                # Le joueur en tête de liste va jouer avec le prochain jamais joué.
+                index += 1
+            player1 = list_of_players_sort_by_scores_ranks[0]
+            player2 = list_of_players_sort_by_scores_ranks[index]
+            match = Match(player1,player2)
+            player1.add_already_played_index(self.players.index(player2))
+            player2.add_already_played_index(self.players.index(player1))
+            tour.add_match(match)
+            # On retire de la liste temporaire les joueurs déjà en match
+            list_of_players_sort_by_scores_ranks.remove(player1)
+            list_of_players_sort_by_scores_ranks.remove(player2)
+        return tour
 
     def add_tour(self):
         """Ajoute un tour au tournoi"""
         list_of_players_sort : List[Player] = []
-        tour: Tour = Tour(f"Round {len(self.tours)+1}")
-        number_of_players_in_tour = len(self.players)
+        tour_name = f"Round {len(self.tours)+1}"
         index = 0
         if (len(self.tours) == 0):
-            list_of_players_sort = self.players_ranks_sort(self.players)
-            while index < (number_of_players_in_tour/2):
-                player1 = list_of_players_sort[index]
-                player2 = list_of_players_sort[index+int(number_of_players_in_tour/2)]  
-                match = Match(player1,player2)
-                player1.add_already_played(self.players.index(player2))
-                player2.add_already_played(self.players.index(player1))
-                tour.add_match(match)
-                index += 1
-            self.tours.append(tour)
-            return tour
-        elif (self.finish == False) and (self.tours[len(self.tours)-1].finish == True):
-            list_of_players_sort = self.players_scores_sort(self.players)
-            while len(list_of_players_sort) != 0:
-                index = 1
-                players_already_played = []
-                for i in list_of_players_sort[0].players_already_played:
-                    players_already_played.append(self.players[i])
-                while list_of_players_sort[index] in list_of_players_sort[0].players_already_played :
-                    if (index == (len(list_of_players_sort)-1)):
-                        break
-                    index += 1
-                player1 = list_of_players_sort[0]
-                player2 = list_of_players_sort[index]
-                match = Match(player1,player2)
-                player1.add_already_played(self.players.index(player2))
-                player2.add_already_played(self.players.index(player1))
-                tour.add_match(match)
-                list_of_players_sort.remove(player1)
-                list_of_players_sort.remove(player2)
-            self.tours.append(tour)
-            return tour
+            self.tours.append(self.get_first_tour(tour_name))
         else:
-            return self.tours[len(self.tours)-1]
-            # if(len(self.tours) == self.tours_number):
-            #     self.finished = True
+            self.tours.append(self.get_next_tour(tour_name))
 
     def set_date_begin(self):
         """Modifier la date et l'heure du début de tournoi"""
-        self.date_end = time.strftime("%A %d %B %Y")
+        self.date_begin = time.strftime("%A %d %B %Y")
 
     def set_date_end(self):
         """Modifier la date et l'heure de fin du tournoi"""
         self.date_end = time.strftime("%A %d %B %Y")
-
-
-        # self.name = name
-        # self.place = place
-        # self.time_control = time_control
-        # self.description = description
-        # self.tours_number = tours_number
-        # self.tours = [] if tours is None else tours
-        # self.date_begin = date_begin
-        # self.date_end = date_end
-        # self.players: List[Player] = [] if players is None else players
-        # self.finish:bool = finish
 
     def serialized(self):
         tours_in_tournament_ids = []
@@ -159,6 +129,7 @@ class Tournament:
                 if (players_in_tournament_id == player.id):
                     players_in_tournament.append(player)
                     break
+ 
         name = serialized_tournament['name']
         place = serialized_tournament['place']
         time_control = serialized_tournament['time_control']

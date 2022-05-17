@@ -1,4 +1,3 @@
-from imp import cache_from_source
 from .player import Player
 from typing import List
 from uuid import uuid4
@@ -18,6 +17,9 @@ class Match:
     def __repr__(self):
         """Used in print."""
         return f"[{self.player1.first_name} {self.player1.last_name},{self.resultplayer1}],[{self.player2.first_name} {self.player2.last_name},{self.resultplayer2}]"
+
+    def get_match(self):
+        return ([self.player1,self.resultplayer1],[self.player2,self.resultplayer2])
 
     def results_match(self,result):
         """
@@ -67,7 +69,8 @@ class Match:
             player2,
             resultplayer1,
             resultplayer2,
-            finish,id
+            finish,
+            id
             )
 
 

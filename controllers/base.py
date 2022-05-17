@@ -1,6 +1,4 @@
 """Define the main controller."""
-from operator import truediv
-from re import A
 from typing import List
 from models.player import Player
 from models.tour import Tour
@@ -55,10 +53,20 @@ class Controller:
             self.option_create_tournament()
             self.option_menu_tournament()
         elif (user_input_menu_option_tournament == 2):
-            # 2 - Choisir un tournoi
+            # 2 - Ajouter le tournoi random1
+            self.add_tournament_random_1()
+            self.view.prompt_for_add_tournament_done()
+            self.option_menu_tournament()
+        elif (user_input_menu_option_tournament == 3):
+            # 3 - Ajouter le tournoi random2
+            self.add_tournament_random_2()
+            self.view.prompt_for_add_tournament_done()
+            self.option_menu_tournament()
+        elif (user_input_menu_option_tournament == 4):
+            # 4 - Choisir un tournoi
             self.option_menu_choose_tournament()
         else:
-            # 3 - Retour au menu principal
+            # 5 - Retour au menu principal
             self.option_menu_main()
 
     def option_menu_choose_tournament(self):
@@ -74,19 +82,24 @@ class Controller:
             self.option_menu_tournament()
 
     def option_menu_tournament_action(self):
+        # Menu du tournoi
         user_input_menu_tournament_action = self.view.display_menu_tournament_action(self.tournament_active)
-        self.view.display_all_information_tournament(self.tournament_active)
+        # self.view.display_all_information_tournament(self.tournament_active)
         self.tour_active = self.tour_to_play()
         self.match_active = self.match_to_play()
         if user_input_menu_tournament_action == 1:
+            # 1 - Ajouter un round
             self.option_add_a_round()
             self.option_menu_tournament_action()
         elif (user_input_menu_tournament_action == 2):
+            # 2 - Jouer un match
             self.option_play_match()
             self.option_menu_tournament_action()
         elif (user_input_menu_tournament_action == 3):
+            # 3 - Modifier le classement d'un joueur
             self.option_modify_player_rank()
         else:
+            # 4 - Retour au menu tournoi
             self.option_menu_tournament()
             
     def option_menu_reports(self):
@@ -98,12 +111,10 @@ class Controller:
         elif (user_input_menu_option_reports == 2):
             # 2 - Liste des tournois
             self.view.display_tournaments_sorted_by_name(self.tournaments)
-            self.view.prompt_for_continue()
             self.option_menu_reports()
         elif (user_input_menu_option_reports == 3):
             # 3 - Liste des acteurs
             self.option_reports_all_actors()
-            self.view.prompt_for_continue()
             self.option_menu_reports()
         else:
             # 4 - Retour au menu principal
@@ -124,15 +135,22 @@ class Controller:
         # Menu Rapport détaillé sur le tournoi
         user_input_menu_tournament_reports= self.view.display_menu_tournament_reports(self.tournament_active.name)
         if (user_input_menu_tournament_reports == 1):
-            # 1 - Joueurs du tournoi
-            self.option_menu_reports_tournament_players()
+            # 1 - Récapitulatif de tout le tournoi
+            self.view.display_all_information_tournament(self.tournament_active)
+            self.option_menu_reports_detailed_tournament()
         elif (user_input_menu_tournament_reports == 2):
-            # 2 - Liste des tours du tournoi
+            # 2 - Joueurs du tournoi
+            self.option_menu_reports_tournament_players()
+        elif (user_input_menu_tournament_reports == 3):
+            # 3 - Liste des tours du tournoi
             self.view.display_tour(self.tournament_active)
-            self.view.prompt_for_continue()
+            self.option_menu_reports_detailed_tournament()
+        elif (user_input_menu_tournament_reports == 4):
+            # 4 - Liste des matchss du tournoi
+            self.view.display_matchs(self.tournament_active)
             self.option_menu_reports_detailed_tournament()
         else:
-            # 3 - Retour au menu des rapports
+            # 5 - Retour au menu des rapports
             self.option_menu_reports_choose_tournament()
 
     def option_menu_reports_tournament_players(self):
@@ -141,22 +159,15 @@ class Controller:
         if (user_input_menu_players_in_tournament_reports == 1):
             # 1 - Liste de tous les joueurs par ordre alphabétique
             self.view.display_player_sorted_by_name(self.tournament_active.players,self.tournament_active.name)
-            self.view.prompt_for_continue()
             self.option_menu_reports_tournament_players()
         elif (user_input_menu_players_in_tournament_reports == 2):
             # 2- Liste de tous les joueurs par classement
             self.view.display_player_sorted_by_rank(self.tournament_active.players,self.tournament_active.name)
-            self.view.prompt_for_continue()
             self.option_menu_reports_tournament_players()
         else:
             # 3- Retour au menu des rapports détaillés du tournoi X
             self.option_menu_reports_detailed_tournament()
 
-
-
-
-
-  
     #######################
     # Function for options
     #######################
@@ -165,30 +176,30 @@ class Controller:
         if self.tournament_active.finish == False:
             if self.tour_active == None:
                 self.tournament_active.add_tour()
+                self.tournament_active.tours[len(self.tournament_active.tours)-1].set_date_begin()
             else:
                 self.view.display_tour_not_done()
-                self.view.prompt_for_continue()
         else:
             self.view.display_tournament_done()
-            self.view.prompt_for_continue()
 
     def option_play_match(self):
-        if self.match_active is None:
+        if self.tournament_active.finish == True:
+            self.view.display_tournament_done()
+        elif self.match_active is None:
             self.view.display_tour_done()
-            self.view.prompt_for_continue()
         else:
             self.match_active.results_match(self.view.display_menu_add_score(self.match_active))
             self.match_active.finish = True
             if (self.last_match_in_current_in_tournament(self.match_active)):
                 self.tour_active.finish = True
                 self.tournament_active.finish = True
-                self.tour_active.set_finish_time()
+                self.tour_active.set_date_end()
                 self.tournament_active.set_date_end()
+                self.view.display_tournament_done()
             elif self.last_match_in_current_tour(self.match_active):
                 self.tour_active.finish = True
-                self.tour_active.set_finish_time()
-            elif self.first_match_in_current_tour(self.match_active):
-                self.tour_active.set_start_time()
+                self.tour_active.set_date_end()
+                
     def option_modify_player_rank(self):
         user_input_menu_player_rank = self.view.display_menu_modify_player_rank(self.tournament_active)
         if user_input_menu_player_rank[0] < (len(self.tournament_active.players) + 1):
@@ -232,20 +243,17 @@ class Controller:
         self.view.display_player_sorted_by_name(actors)
 
     def option_create_tournament(self):
-        # list_input_infos_tournament = self.view.prompt_for_create_tournament()
-        # new_tournament = Tournament(list_input_infos_tournament[0],list_input_infos_tournament[1],list_input_infos_tournament[2],list_input_infos_tournament[3])
-        
-        # list_info_players = self.view.prompt_for_add_players(int(list_input_infos_tournament[4]))
-        # for list_info_player in list_info_players:
-        #     player = Player(list_info_player[0], list_info_player[1], list_info_player[2], list_info_player[3],list_info_player[4])
-        #     new_tournament.add_player(player)
-        # self.tournaments.append(new_tournament)
-        # self.view.terminal_clear()
-        # self.view.display_player_rank_score(new_tournament)
-        # self.view.prompt_for_continue()
+        list_input_infos_tournament = self.view.prompt_for_create_tournament()
+        new_tournament = Tournament(list_input_infos_tournament[0],list_input_infos_tournament[1],list_input_infos_tournament[2],list_input_infos_tournament[3])
 
-        self.simu_create_tournament2()
-        self.simu_update_ranks(self.tournaments[0].players)
+        list_info_players = self.view.prompt_for_add_players(8)
+        for list_info_player in list_info_players:
+            player = Player(list_info_player[0], list_info_player[1], list_info_player[2], list_info_player[3],list_info_player[4])
+            new_tournament.add_player(player)
+        new_tournament.set_date_begin()
+        self.tournaments.append(new_tournament)
+        self.view.terminal_clear()
+        self.view.display_player_sorted_by_rank_score(new_tournament.players)
 
     def tournaments_in_progress(self):
         tournaments_in_progress = []
@@ -296,13 +304,7 @@ class Controller:
 
     def save_serialized_in_db(self, serialized_items,table_name):
         table_items = self.db.table(table_name)
-        # table_items.truncate()	# clear the table first
         table_items.insert_multiple(serialized_items)
-    
-        #     players = self.deserialized_players(self.load_serialized_from_db("player"))
-        # matchs = self.deserialized_matchs(self.load_serialized_from_db("match"), players)
-        # tours = self.deserialized_tours(self.load_serialized_from_db("tour"), matchs)
-        # tournaments = self.deserialized_tournaments(self.load_serialized_from_db("tournament"), tours, players)
         
     def clear_all_tab_in_db(self):
         self.db.drop_tables()
@@ -311,25 +313,16 @@ class Controller:
         load_table = self.db.table(table_name)
         return load_table.all()
 
-    # def option_load_from_db(self, table_name):
-    #     self.players_in_db = self.deserialized_items(self.load_serialized_from_db(table_name))
-    #     self.view.terminal_clear()
-    #     self.view.display_player_rank_score_2(self.players_in_db)
-    #     self.view.prompt_for_continue()
-
     def option_load_from_db(self):
         try:
             players = self.deserialized_players(self.load_serialized_from_db("player"))
             matchs = self.deserialized_matchs(self.load_serialized_from_db("match"), players)
             tours = self.deserialized_tours(self.load_serialized_from_db("tour"), matchs)
             tournaments = self.deserialized_tournaments(self.load_serialized_from_db("tournament"), tours, players)
-            self.view.display_all_information_tournament(tournaments[0])
             self.tournaments = tournaments
             self.view.display_load_from_database_done()
-            self.view.prompt_for_continue()
         except IndexError:
             self.view.display_load_from_database_error()
-            self.view.prompt_for_continue()
 
     def option_save_all_serialized_table_to_db(self):
         self.option_save_serialized_table_to_db(self.serialized_items(self.tournaments), "tournament") #To be update
@@ -339,11 +332,6 @@ class Controller:
             for tour in tournament.tours:
                 self.option_save_serialized_table_to_db(self.serialized_items(tour.matchs), "match") #To be update
         self.view.display_save_to_database_done()
-        self.view.prompt_for_continue()
-        # players = self.deserialized_players(players_serialized)
-        # matchs = self.
-        # tours_serialized
-        # tournaments
 
     ##########################
     # Function for SIMU part
@@ -371,17 +359,33 @@ class Controller:
         tournament = Tournament("Tournoi Demo 1","Paris","Bullet","Description du tounoi de demonstration 1")
         self.tournament_simu = tournament
 
-    def simu_create_tournament2(self):
-        tournament = Tournament("Tournoi Demo 2","Paris","Bullet","Description du tounoi de demonstration 1")
-        tournament.add_player(Player("Tan1", "TRAN1", "04/10/1985", "M"))
-        tournament.add_player(Player("Tan2", "TRAN2", "05/10/1985", "F"))
-        tournament.add_player(Player("Tan5", "TRAN5", "08/10/1985", "F"))
-        tournament.add_player(Player("Tan6", "TRAN6", "09/10/1985", "M"))
-        tournament.add_player(Player("Tan7", "TRAN7", "10/10/1985", "M"))
-        tournament.add_player(Player("Tan", "TRAN", "03/10/1985", "M"))
-        tournament.add_player(Player("Tan3", "TRAN3", "06/10/1985", "M"))
-        tournament.add_player(Player("Tan4", "TRAN4", "07/10/1985", "F"))
-        self.tournaments.append(tournament)
+    def add_tournament_random_1(self):
+        new_tournament = Tournament("Tournoi Random1","Paris","Bullet","Description du tounoi Random1")
+        new_tournament.add_player(Player("Inès-Corinne", "Voisin", "03/19/85", "M"))
+        new_tournament.add_player(Player("Léon", "Aubry", "02/04/00", "F"))
+        new_tournament.add_player(Player("Michelle ", "Hardy", "09/10/98", "F"))
+        new_tournament.add_player(Player("Denise Martineau", "Renault", "02/26/90", "M"))
+        new_tournament.add_player(Player("Auguste", "Regnier", "04/12/95", "M"))
+        new_tournament.add_player(Player("Anne-Agathe", "Guerin", "01/01/88", "M"))
+        new_tournament.add_player(Player("Henriette ", "Deschamps", "08/03/01", "M"))
+        new_tournament.add_player(Player("Jacqueline Riou", "Lemaitre", "04/23/89", "F"))
+        self.simu_update_ranks(new_tournament.players)
+        new_tournament.set_date_begin()
+        self.tournaments.append(new_tournament)
+
+    def add_tournament_random_2(self):
+        new_tournament = Tournament("Tournoi Random2","Marseille","Blitz","Description du tounoi Random2")
+        new_tournament.add_player(Player("Bernadette ", "Guilbert", "08/27/86", "M"))
+        new_tournament.add_player(Player("Xavier", "Bernier", "02/13/99", "F"))
+        new_tournament.add_player(Player("Auguste ", "Olivier", "02/29/92", "F"))
+        new_tournament.add_player(Player("Geneviève", "Dupuy", "12/29/89", "M"))
+        new_tournament.add_player(Player("Inès-Louise", "Pasquier", "09/06/86", "M"))
+        new_tournament.add_player(Player("Emmanuelle ", "Bourgeois", "06/09/01", "M"))
+        new_tournament.add_player(Player("Claude ", "Meunier", "03/27/96", "M"))
+        new_tournament.add_player(Player("Elisabeth ", "Denis", "05/22/85", "F"))
+        self.simu_update_ranks(new_tournament.players)
+        new_tournament.set_date_begin()
+        self.tournaments.append(new_tournament)
 
 
     def simu_add_players(self):   
@@ -403,16 +407,15 @@ class Controller:
         match.finish = True
 
     def simu_play_tour(self, tour:Tour):  
-        tour.set_start_time()
+        tour.set_date_begin()
         for match in tour.matchs:
             self.simu_play_match(match)
         tour.finish = True
-        tour.set_finish_time()
+        tour.set_date_end()
 
     def display_simu(self):
         self.view.terminal_clear()
         self.view.display_all_information_tournament(self.tournament_simu)
-        self.view.prompt_for_continue()
 
     def run(self):
         self.option_menu_main()
