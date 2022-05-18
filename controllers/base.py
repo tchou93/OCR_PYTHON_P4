@@ -1,380 +1,341 @@
-"""Define the main controller."""
+import random
 from typing import List
 from models.player import Player
-from models.tour import Tour
+from models.round import Round
 from models.match import Match
 from models.tournament import Tournament
+from controllers.database import Database_tournament
 from views.base import View
-import random
-from tinydb import TinyDB
+
 
 class Controller:
-    """Main controller."""
+    def __init__(self, view: View):
+        self.view = view
+        self.tournaments: List[Tournament] = []
+        self.tournament_active: Tournament = None
+        self.tournament_simu: Tournament = None
+        self.round_active: Round = None
+        self.match_active: Match = None
 
-    def __init__(self,view: View):
-        self.view  = view
-        self.tournaments:List[Tournament] = []
-        self.tournament_active:Tournament = None
-        self.tournament_simu:Tournament = None
-        self.tour_active:Tour = None
-        self.match_active:Match = None
-        self.db = TinyDB('db_chess_tournament.json')
     #####################
-    # Function for menu
+    # Menu
     #####################
     def option_menu_main(self):
-        # Menu principal
+        """Display the menu <Menu principal> on the terminal"""
         user_input_menu_main = self.view.display_menu_main()
-        if (user_input_menu_main == 1):
-            # 1 - Tournoi
+        if user_input_menu_main == 1:
+            # Enter to the option: 1 - Tournoi
             self.option_menu_tournament()
-        elif (user_input_menu_main == 2):
-            # 2 - Sauvegarder les données
-            self.clear_all_tab_in_db()
-            self.option_save_all_serialized_table_to_db()
+        elif user_input_menu_main == 2:
+            # Enter to the option: 2 - Sauvegarder les données
+            Database_tournament.clear_all_tab_in_db()
+            Database_tournament.option_save_all_serialized_table_to_db(self.tournaments)
             self.option_menu_main()
-        elif (user_input_menu_main == 3):
-            # 3 - Charger les données
-            self.option_load_from_db() #To be update
+        elif user_input_menu_main == 3:
+            # Enter to the option: 3 - Charger les données
+            tournaments_in_db = Database_tournament.option_load_from_db()
+            if tournaments_in_db is not None:
+                self.tournaments = tournaments_in_db
             self.option_menu_main()
-        elif (user_input_menu_main == 4):
-            # 4 - Rapports
+        elif user_input_menu_main == 4:
+            # Enter to the option: 4 - Rapports
             self.option_menu_reports()
-        elif (user_input_menu_main == 5):
-            # 5 – [TEST]
-            self.simu1()
-            self.option_menu_main()
 
     def option_menu_tournament(self):
-        # Menu Tournoi
-        user_input_menu_option_tournament= self.view.display_menu_tournament()
-        if (user_input_menu_option_tournament == 1):
-            # 1 - Créer un tournoi
+        """Display the menu <Tournoi> on the terminal"""
+        user_input_menu_option_tournament = self.view.display_menu_tournament()
+        if user_input_menu_option_tournament == 1:
+            # Enter to the option: 1 - Créer un tournoi
             self.option_create_tournament()
             self.option_menu_tournament()
-        elif (user_input_menu_option_tournament == 2):
-            # 2 - Ajouter le tournoi random1
+        elif user_input_menu_option_tournament == 2:
+            # Enter to the option: 2 - Ajouter le tournoi random1
             self.add_tournament_random_1()
-            self.view.prompt_for_add_tournament_done()
             self.option_menu_tournament()
-        elif (user_input_menu_option_tournament == 3):
-            # 3 - Ajouter le tournoi random2
+        elif user_input_menu_option_tournament == 3:
+            # Enter to the option: 3 - Ajouter le tournoi random2
             self.add_tournament_random_2()
-            self.view.prompt_for_add_tournament_done()
             self.option_menu_tournament()
-        elif (user_input_menu_option_tournament == 4):
-            # 4 - Choisir un tournoi
+        elif user_input_menu_option_tournament == 4:
+            # Enter to the option: 4 - Choisir un tournoi
             self.option_menu_choose_tournament()
         else:
-            # 5 - Retour au menu principal
+            # Enter to the option: 5 - Retour au menu principal
             self.option_menu_main()
 
     def option_menu_choose_tournament(self):
-        # Menu choisir un tournoi
+        """Display the menu <Choisir un tournoi> on the terminal"""
         tournaments_in_progress = self.tournaments_in_progress()
-        user_input_menu_option_tournament = self.view.display_menu_choose_tournament(tournaments_in_progress)
+        user_input_menu_option_tournament = self.view.display_menu_choose_tournament(
+            tournaments_in_progress
+        )
         if user_input_menu_option_tournament < len(tournaments_in_progress) + 1:
-            # 1:X - <tournoi>
-            self.option_tournament_selected(tournaments_in_progress[user_input_menu_option_tournament-1])
+            # Enter to the option: 1:X - <tournoi>
+            self.tournament_active = tournaments_in_progress[
+                user_input_menu_option_tournament - 1
+            ]
             self.option_menu_tournament_action()
         else:
-            # Retour au menu tournoi
+            # Enter to the option: Retour au menu tournoi
             self.option_menu_tournament()
 
     def option_menu_tournament_action(self):
-        # Menu du tournoi
-        user_input_menu_tournament_action = self.view.display_menu_tournament_action(self.tournament_active)
-        # self.view.display_all_information_tournament(self.tournament_active)
-        self.tour_active = self.tour_to_play()
+        """Display the menu <Tournoi x> on the terminal"""
+        user_input_menu_tournament_action = self.view.display_menu_tournament_action(
+            self.tournament_active
+        )
+        self.round_active = self.round_to_play()
         self.match_active = self.match_to_play()
         if user_input_menu_tournament_action == 1:
-            # 1 - Ajouter un round
+            # Enter to the option: 1 - Ajouter un round
             self.option_add_a_round()
             self.option_menu_tournament_action()
-        elif (user_input_menu_tournament_action == 2):
-            # 2 - Jouer un match
+        elif user_input_menu_tournament_action == 2:
+            # Enter to the option: 2 - Jouer un match
             self.option_play_match()
             self.option_menu_tournament_action()
-        elif (user_input_menu_tournament_action == 3):
-            # 3 - Modifier le classement d'un joueur
+        elif user_input_menu_tournament_action == 3:
+            # Enter to the option: 3 - Modifier le classement d'un joueur
             self.option_modify_player_rank()
         else:
-            # 4 - Retour au menu tournoi
+            # Enter to the option: 4 - Retour au menu tournoi
             self.option_menu_tournament()
-            
+
     def option_menu_reports(self):
-        # Menu Rapports
-        user_input_menu_option_reports= self.view.display_menu_reports()
-        if (user_input_menu_option_reports == 1):
-            # 1 - Rapport détaillé sur un tournoi
+        """Display the menu <Rapports> on the terminal"""
+        user_input_menu_option_reports = self.view.display_menu_reports()
+        if user_input_menu_option_reports == 1:
+            # Enter to the option: 1 - Rapport détaillé sur un tournoi
             self.option_menu_reports_choose_tournament()
-        elif (user_input_menu_option_reports == 2):
-            # 2 - Liste des tournois
+        elif user_input_menu_option_reports == 2:
+            # Enter to the option: 2 - Liste des tournois
             self.view.display_tournaments_sorted_by_name(self.tournaments)
             self.option_menu_reports()
-        elif (user_input_menu_option_reports == 3):
-            # 3 - Liste des acteurs
+        elif user_input_menu_option_reports == 3:
+            # Enter to the option: 3 - Liste des acteurs
             self.option_reports_all_actors()
             self.option_menu_reports()
         else:
-            # 4 - Retour au menu principal
+            # Enter to the option: 4 - Retour au menu principal
             self.option_menu_main()
 
     def option_menu_reports_choose_tournament(self):
-        # Menu Choisir un tournoi
-        user_input_menu_reports_all_tournament= self.view.display_menu_report_choose_tournament(self.tournaments)
+        """Display the menu <Choisir un tournoi> on the terminal"""
+        user_input_menu_reports_all_tournament = (
+            self.view.display_menu_report_choose_tournament(self.tournaments)
+        )
         if user_input_menu_reports_all_tournament < len(self.tournaments) + 1:
-            # 1:X - <Nom des tournois>
-            self.tournament_active = self.tournaments[user_input_menu_reports_all_tournament-1]
+            # Enter to the option: 1:X - <Nom des tournois>
+            self.tournament_active = self.tournaments[
+                user_input_menu_reports_all_tournament - 1
+            ]
             self.option_menu_reports_detailed_tournament()
         else:
-            # X+1 - Retour au menu tournoi
+            # Enter to the option: X+1 - Retour au menu tournoi
             self.option_menu_reports()
 
     def option_menu_reports_detailed_tournament(self):
-        # Menu Rapport détaillé sur le tournoi
-        user_input_menu_tournament_reports= self.view.display_menu_tournament_reports(self.tournament_active.name)
-        if (user_input_menu_tournament_reports == 1):
-            # 1 - Récapitulatif de tout le tournoi
+        """Display the menu <Rapport détaillé sur le tournoi> on the terminal"""
+        user_input_menu_tournament_reports = self.view.display_menu_tournament_reports(
+            self.tournament_active.name
+        )
+        if user_input_menu_tournament_reports == 1:
+            # Enter to the option: 1 - Récapitulatif de tout le tournoi
             self.view.display_all_information_tournament(self.tournament_active)
             self.option_menu_reports_detailed_tournament()
-        elif (user_input_menu_tournament_reports == 2):
-            # 2 - Joueurs du tournoi
+        elif user_input_menu_tournament_reports == 2:
+            # Enter to the option: 2 - Joueurs du tournoi
             self.option_menu_reports_tournament_players()
-        elif (user_input_menu_tournament_reports == 3):
-            # 3 - Liste des tours du tournoi
+        elif user_input_menu_tournament_reports == 3:
+            # Enter to the option: 3 - Liste des rounds du tournoi
             self.view.display_tour(self.tournament_active)
             self.option_menu_reports_detailed_tournament()
-        elif (user_input_menu_tournament_reports == 4):
-            # 4 - Liste des matchss du tournoi
+        elif user_input_menu_tournament_reports == 4:
+            # Enter to the option: 4 - Liste des matchss du tournoi
             self.view.display_matchs(self.tournament_active)
             self.option_menu_reports_detailed_tournament()
         else:
-            # 5 - Retour au menu des rapports
+            # Enter to the option: 5 - Retour au menu des rapports
             self.option_menu_reports_choose_tournament()
 
     def option_menu_reports_tournament_players(self):
-        # Menu Rapport joueurs du tournoi X
-        user_input_menu_players_in_tournament_reports= self.view.display_menu_players_in_tournament_reports(self.tournament_active.name)
-        if (user_input_menu_players_in_tournament_reports == 1):
-            # 1 - Liste de tous les joueurs par ordre alphabétique
-            self.view.display_player_sorted_by_name(self.tournament_active.players,self.tournament_active.name)
+        """Display the menu <Rapport joueurs du tournoi X> on the terminal"""
+        user_input_menu_players_in_tournament_reports = (
+            self.view.display_menu_players_in_tournament_reports(
+                self.tournament_active.name
+            )
+        )
+        if user_input_menu_players_in_tournament_reports == 1:
+            # Enter to the option: 1 - Liste de tous les joueurs par ordre alphabétique
+            self.view.display_player_sorted_by_name(
+                self.tournament_active.players, self.tournament_active.name
+            )
             self.option_menu_reports_tournament_players()
-        elif (user_input_menu_players_in_tournament_reports == 2):
-            # 2- Liste de tous les joueurs par classement
-            self.view.display_player_sorted_by_rank(self.tournament_active.players,self.tournament_active.name)
+        elif user_input_menu_players_in_tournament_reports == 2:
+            # Enter to the option: 2- Liste de tous les joueurs par classement
+            self.view.display_player_sorted_by_rank(
+                self.tournament_active.players, self.tournament_active.name
+            )
             self.option_menu_reports_tournament_players()
         else:
-            # 3- Retour au menu des rapports détaillés du tournoi X
+            # Enter to the option: 3- Retour au menu des rapports détaillés du tournoi X
             self.option_menu_reports_detailed_tournament()
 
     #######################
-    # Function for options
+    # Option
     #######################
 
     def option_add_a_round(self):
-        if self.tournament_active.finish == False:
-            if self.tour_active == None:
-                self.tournament_active.add_tour()
-                self.tournament_active.tours[len(self.tournament_active.tours)-1].set_date_begin()
+        if self.tournament_active.finish is False:
+            if self.round_active is None:
+                self.tournament_active.add_round()
+                self.tournament_active.rounds[
+                    len(self.tournament_active.rounds) - 1
+                ].set_date_begin()
             else:
                 self.view.display_tour_not_done()
         else:
             self.view.display_tournament_done()
 
     def option_play_match(self):
-        if self.tournament_active.finish == True:
+        if self.tournament_active.finish is True:
             self.view.display_tournament_done()
         elif self.match_active is None:
             self.view.display_tour_done()
         else:
-            self.match_active.results_match(self.view.display_menu_add_score(self.match_active))
+            self.match_active.results_match(
+                self.view.display_menu_add_score(self.match_active)
+            )
             self.match_active.finish = True
-            if (self.last_match_in_current_in_tournament(self.match_active)):
-                self.tour_active.finish = True
+            if self.last_match_in_current_in_tournament(self.match_active):
+                self.round_active.finish = True
                 self.tournament_active.finish = True
-                self.tour_active.set_date_end()
+                self.round_active.set_date_end()
                 self.tournament_active.set_date_end()
                 self.view.display_tournament_done()
             elif self.last_match_in_current_tour(self.match_active):
-                self.tour_active.finish = True
-                self.tour_active.set_date_end()
-                
+                self.round_active.finish = True
+                self.round_active.set_date_end()
+
     def option_modify_player_rank(self):
-        user_input_menu_player_rank = self.view.display_menu_modify_player_rank(self.tournament_active)
+        user_input_menu_player_rank = self.view.display_menu_modify_player_rank(
+            self.tournament_active
+        )
         if user_input_menu_player_rank[0] < (len(self.tournament_active.players) + 1):
-            self.tournament_active.players[user_input_menu_player_rank[0]-1].ranking = user_input_menu_player_rank[1]
+            self.tournament_active.players[
+                user_input_menu_player_rank[0] - 1
+            ].ranking = user_input_menu_player_rank[1]
             self.option_modify_player_rank()
         else:
             self.option_menu_tournament_action()
 
-    def match_to_play(self):
-        if self.tour_active is None:
-            return None
-        for match in self.tour_active.matchs:
-            if not match.finish:
-                return match
-        return None
-
-    def tour_to_play(self):
-        for tour in self.tournament_active.tours:
-            if not tour.finish:
-                return tour
-        return None
-
-    def first_match_in_current_tour(self,match:Match):
-        return (self.tour_active.matchs[0]) == match
-
-    def last_match_in_current_tour(self,match:Match):
-        for index in range(len(self.tour_active.matchs)):
-            if ((self.tour_active.matchs[index]) == match) and (index == len(self.tour_active.matchs)-1):
-                return True
-        else:
-            return False
-
-    def last_match_in_current_in_tournament(self,match:Match):
-        if (len(self.tournament_active.tours) == self.tournament_active.tours_number) and self.last_match_in_current_tour(match):
-            return True
-        else:
-            return False
-
     def option_reports_all_actors(self):
-        actors = self.deserialized_players(self.load_serialized_from_db("player"))
+        actors = Database_tournament.deserialized_players(
+            Database_tournament.load_serialized_from_db("player")
+        )
         self.view.display_player_sorted_by_name(actors)
 
     def option_create_tournament(self):
         list_input_infos_tournament = self.view.prompt_for_create_tournament()
-        new_tournament = Tournament(list_input_infos_tournament[0],list_input_infos_tournament[1],list_input_infos_tournament[2],list_input_infos_tournament[3])
+        new_tournament = Tournament(
+            list_input_infos_tournament[0],
+            list_input_infos_tournament[1],
+            list_input_infos_tournament[2],
+            list_input_infos_tournament[3],
+        )
 
         list_info_players = self.view.prompt_for_add_players(8)
         for list_info_player in list_info_players:
-            player = Player(list_info_player[0], list_info_player[1], list_info_player[2], list_info_player[3],list_info_player[4])
+            player = Player(
+                list_info_player[0],
+                list_info_player[1],
+                list_info_player[2],
+                list_info_player[3],
+                list_info_player[4],
+            )
             new_tournament.add_player(player)
         new_tournament.set_date_begin()
         self.tournaments.append(new_tournament)
         self.view.terminal_clear()
         self.view.display_player_sorted_by_rank_score(new_tournament.players)
+        # !!!!!!!!!!!!!! TBD !!!!!!!!!!!!!!
+        # Faire en sorte qu'on puisse ressortir de cette option
+        # Faire en sorte qu'on puisse ajouter un joueur si la BD est chargé
 
+    #######################
+    # Option
+    #######################
+
+    # Option for the menu "option_menu_tournament_action"
+    def match_to_play(self):
+        if self.round_active is None:
+            return None
+        for match in self.round_active.matchs:
+            if not match.finish:
+                return match
+        return None
+
+    def round_to_play(self):
+        for round in self.tournament_active.rounds:
+            if not round.finish:
+                return round
+        return None
+
+    # Option for the menu "option_play_match"
+    def last_match_in_current_tour(self, match: Match):
+        for index in range(len(self.round_active.matchs)):
+            if ((self.round_active.matchs[index]) == match) and (
+                index == len(self.round_active.matchs) - 1
+            ):
+                return True
+        else:
+            return False
+
+    def last_match_in_current_in_tournament(self, match: Match):
+        if (
+            len(self.tournament_active.rounds) == self.tournament_active.rounds_number
+        ) and self.last_match_in_current_tour(match):
+            return True
+        else:
+            return False
+
+    # Option for the menu "option_menu_choose_tournament"
     def tournaments_in_progress(self):
         tournaments_in_progress = []
         for tournament in self.tournaments:
-            if tournament.finish == False:
-                tournaments_in_progress.append(tournament) 
+            if tournament.finish is False:
+                tournaments_in_progress.append(tournament)
         return tournaments_in_progress
 
-    def option_tournament_selected(self, tournament_selected):
-        self.tournament_active = tournament_selected        
-
-    ########################
-    # Function for data base
-    ########################
-
-    def serialized_items(self, items):
-        serialized = []
-        for item in items:
-            serialized.append(item.serialized())
-        return serialized
-
-    def deserialized_players(self, serialized_players):
-        players = []
-        for serialized_player in serialized_players:
-            players.append(Player.deserialized(serialized_player))
-        return players
-
-    def deserialized_matchs(self, serialized_matchs, players: List[Player]):
-        matchs = []
-        for serialized_match in serialized_matchs:
-            matchs.append(Match.deserialized(serialized_match, players))
-        return matchs
-
-    def deserialized_tours(self, serialized_tours, matchs: List[Match]):
-        tours = []
-        for serialized_tour in serialized_tours:
-            tours.append(Tour.deserialized(serialized_tour, matchs))
-        return tours
-
-    def deserialized_tournaments(self, serialized_tournaments, tours: List[Tour], players: List[Player]):
-        tournaments = []
-        for serialized_tournament in serialized_tournaments:
-            tournaments.append(Tournament.deserialized(serialized_tournament, tours, players))
-        return tournaments
-
-    def option_save_serialized_table_to_db(self, serialized_items, table_name):
-        self.save_serialized_in_db(serialized_items,table_name)
-
-    def save_serialized_in_db(self, serialized_items,table_name):
-        table_items = self.db.table(table_name)
-        table_items.insert_multiple(serialized_items)
-        
-    def clear_all_tab_in_db(self):
-        self.db.drop_tables()
-
-    def load_serialized_from_db(self,table_name):
-        load_table = self.db.table(table_name)
-        return load_table.all()
-
-    def option_load_from_db(self):
-        try:
-            players = self.deserialized_players(self.load_serialized_from_db("player"))
-            matchs = self.deserialized_matchs(self.load_serialized_from_db("match"), players)
-            tours = self.deserialized_tours(self.load_serialized_from_db("tour"), matchs)
-            tournaments = self.deserialized_tournaments(self.load_serialized_from_db("tournament"), tours, players)
-            self.tournaments = tournaments
-            self.view.display_load_from_database_done()
-        except IndexError:
-            self.view.display_load_from_database_error()
-
-    def option_save_all_serialized_table_to_db(self):
-        self.option_save_serialized_table_to_db(self.serialized_items(self.tournaments), "tournament") #To be update
-        for tournament in self.tournaments:
-            self.option_save_serialized_table_to_db(self.serialized_items(tournament.tours), "tour") #To be update
-            self.option_save_serialized_table_to_db(self.serialized_items(tournament.players), "player") #To be update
-            for tour in tournament.tours:
-                self.option_save_serialized_table_to_db(self.serialized_items(tour.matchs), "match") #To be update
-        self.view.display_save_to_database_done()
-
     ##########################
-    # Function for SIMU part
+    # Function for simulation
     ##########################
-    def simu1(self):
-        self.simu_create_tournament1()
-        self.display_simu()
-
-        self.simu_add_players()
-        self.display_simu()
-
-        self.simu_update_ranks(self.tournament_simu.players)
-        self.display_simu()
-
-        for index in range(4):
-            self.tournament_simu.add_tour()
-            self.display_simu()
-            self.simu_play_tour(self.tournament_simu.tours[index]) 
-            self.tournament_simu.tours[index].finish = True
-            self.display_simu()
-        self.tournament_simu.set_date_end()
-        self.tournament_simu = None
-
-    def simu_create_tournament1(self):
-        tournament = Tournament("Tournoi Demo 1","Paris","Bullet","Description du tounoi de demonstration 1")
-        self.tournament_simu = tournament
-
     def add_tournament_random_1(self):
-        new_tournament = Tournament("Tournoi Random1","Paris","Bullet","Description du tounoi Random1")
+        new_tournament = Tournament(
+            "Tournoi Random1", "Paris", "Bullet", "Description du tounoi Random1"
+        )
         new_tournament.add_player(Player("Inès-Corinne", "Voisin", "03/19/85", "M"))
         new_tournament.add_player(Player("Léon", "Aubry", "02/04/00", "F"))
         new_tournament.add_player(Player("Michelle ", "Hardy", "09/10/98", "F"))
-        new_tournament.add_player(Player("Denise Martineau", "Renault", "02/26/90", "M"))
+        new_tournament.add_player(
+            Player("Denise Martineau", "Renault", "02/26/90", "M")
+        )
         new_tournament.add_player(Player("Auguste", "Regnier", "04/12/95", "M"))
         new_tournament.add_player(Player("Anne-Agathe", "Guerin", "01/01/88", "M"))
         new_tournament.add_player(Player("Henriette ", "Deschamps", "08/03/01", "M"))
-        new_tournament.add_player(Player("Jacqueline Riou", "Lemaitre", "04/23/89", "F"))
-        self.simu_update_ranks(new_tournament.players)
+        new_tournament.add_player(
+            Player("Jacqueline Riou", "Lemaitre", "04/23/89", "F")
+        )
+        for player in new_tournament.players:
+            player.ranking = random.randint(1, 1000)
         new_tournament.set_date_begin()
         self.tournaments.append(new_tournament)
+        self.view.prompt_for_add_tournament_done()
 
     def add_tournament_random_2(self):
-        new_tournament = Tournament("Tournoi Random2","Marseille","Blitz","Description du tounoi Random2")
+        new_tournament = Tournament(
+            "Tournoi Random2", "Marseille", "Blitz", "Description du tounoi Random2"
+        )
         new_tournament.add_player(Player("Bernadette ", "Guilbert", "08/27/86", "M"))
         new_tournament.add_player(Player("Xavier", "Bernier", "02/13/99", "F"))
         new_tournament.add_player(Player("Auguste ", "Olivier", "02/29/92", "F"))
@@ -383,40 +344,11 @@ class Controller:
         new_tournament.add_player(Player("Emmanuelle ", "Bourgeois", "06/09/01", "M"))
         new_tournament.add_player(Player("Claude ", "Meunier", "03/27/96", "M"))
         new_tournament.add_player(Player("Elisabeth ", "Denis", "05/22/85", "F"))
-        self.simu_update_ranks(new_tournament.players)
+        for player in new_tournament.players:
+            player.ranking = random.randint(1, 1000)
         new_tournament.set_date_begin()
         self.tournaments.append(new_tournament)
-
-
-    def simu_add_players(self):   
-        self.tournament_simu.add_player(Player("Tan1", "TRAN1", "04/10/1985", "M"))
-        self.tournament_simu.add_player(Player("Tan2", "TRAN2", "05/10/1985", "F"))
-        self.tournament_simu.add_player(Player("Tan5", "TRAN5", "08/10/1985", "F"))
-        self.tournament_simu.add_player(Player("Tan6", "TRAN6", "09/10/1985", "M"))
-        self.tournament_simu.add_player(Player("Tan7", "TRAN7", "10/10/1985", "M"))
-        self.tournament_simu.add_player(Player("Tan", "TRAN", "03/10/1985", "M"))
-        self.tournament_simu.add_player(Player("Tan3", "TRAN3", "06/10/1985", "M"))
-        self.tournament_simu.add_player(Player("Tan4", "TRAN4", "07/10/1985", "F"))
-
-    def simu_update_ranks(self,players: List[Player]):
-        for player in players:
-            player.ranking = (random.randint(1,1000))
-
-    def simu_play_match(self,match: Match):   
-        match.results_match(random.randint(1,3))
-        match.finish = True
-
-    def simu_play_tour(self, tour:Tour):  
-        tour.set_date_begin()
-        for match in tour.matchs:
-            self.simu_play_match(match)
-        tour.finish = True
-        tour.set_date_end()
-
-    def display_simu(self):
-        self.view.terminal_clear()
-        self.view.display_all_information_tournament(self.tournament_simu)
+        self.view.prompt_for_add_tournament_done()
 
     def run(self):
         self.option_menu_main()
-
