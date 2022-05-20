@@ -1,13 +1,40 @@
 import time
 import locale
 from uuid import uuid4
-from typing import List
+from typing import List, Dict, Type, TypeVar
 from models.player import Player
 from models.round import Round
 from models.match import Match
 
+T = TypeVar("T", bound="Tournament")
+
 
 class Tournament:
+    """Class to represent a tournament
+    Instance attributes:
+        name: str
+        place: str
+        time_control: str
+        description: str
+        rounds_number: int
+        rounds: List[Round]
+        date_begin: str
+        date_end: str
+        players: List[Player]
+        finish: Boolean
+        id: str
+    Instance methods:
+        add_player(self, player)
+        get_first_round(self, round_name)
+        get_next_round(self, round_name)
+        add_round(self)
+        set_date_begin(self)
+        set_date_end(self)
+        serialized(self)
+    Class method:
+        deserialized(cls: Type[T], serialized_tournament, rounds: List[Round], players: List[Player]) -> T
+    """
+
     def __init__(
         self,
         name: str,
@@ -36,7 +63,7 @@ class Tournament:
         locale.setlocale(locale.LC_ALL, "fr_FR")
 
     def __repr__(self):
-        """Utiliser pour avoir une représentation avec la fontion print"""
+        """Used for print."""
         description_tournament = (
             f"Nom du tournoi : {self.name}, Lieu : {self.place}, Date: {self.date_begin}"
             " - {self.date_end}, contrôle de temps : {self.time_control}, Description : {self.description} \n"
@@ -44,10 +71,18 @@ class Tournament:
         return description_tournament
 
     def add_player(self, player):
-        """Ajoute le joueur player au tournoi"""
+        """Add a player to the instance attribut <players>."""
         self.players.append(player)
 
-    def get_first_tour(self, round_name):
+    def get_first_round(self, round_name: str) -> Round:
+        """Build the first round (swiss system)
+
+        Args:
+            round_name (str): Name of the round.
+
+        Returns:
+            Round: Instance of the first round.
+        """
         round = Round(round_name)
         list_of_players_sort_by_ranks = sorted(self.players, key=lambda p: p.ranking)
         size = int(len(list_of_players_sort_by_ranks) / 2)
@@ -57,14 +92,25 @@ class Tournament:
                 list_of_players_sort_by_ranks[size:],
             )
         )
+        # Best players of the first part of the players sort by ranks with the best
+        # players of the second part.
         for (player1, player2) in matchs_players:
             player1.add_already_played_index(self.players.index(player2))
             player2.add_already_played_index(self.players.index(player1))
             round.add_match(Match(player1, player2))
         return round
 
-    def get_next_tour(self, round_name):
+    def get_next_round(self, round_name: str) -> Round:
+        """Build the next round (swiss system)
+
+        Args:
+            round_name (str): Name of the round.
+
+        Returns:
+            Round: Instance of the next round.
+        """
         round = Round(round_name)
+        # Sort the player by score and rank
         list_of_players_sort_by_ranks = sorted(self.players, key=lambda p: p.ranking)
         list_of_players_sort_by_scores_ranks = sorted(
             list_of_players_sort_by_ranks, key=lambda p: p.score, reverse=True
@@ -72,6 +118,9 @@ class Tournament:
         while len(list_of_players_sort_by_scores_ranks) != 0:
             index = 1
             list_of_players_already_played_with_player_1 = []
+
+            # Build an instance list of players already played with player 1 with
+            # a list of index.
             for player_already_played_index in list_of_players_sort_by_scores_ranks[
                 0
             ].players_already_played_index:
@@ -79,47 +128,59 @@ class Tournament:
                     self.players[player_already_played_index]
                 )
 
+            # Associate the player 1 of the sort list with the player 2 if there is
+            # already no match between us, else Associate the player 3 ect ...
             while (
                 list_of_players_sort_by_scores_ranks[index]
                 in list_of_players_already_played_with_player_1
             ):
                 if index == (len(list_of_players_sort_by_scores_ranks) - 1):
-                    # Si il reste deux joueurs alors on force le jeu même si ils ont déjà joué ensemble
+                    # If there is only left 2 players to play, then we force the game
+                    # even if they have already played together
                     break
-                # Le joueur en tête de liste va jouer avec le prochain jamais joué.
                 index += 1
+            # Determine the player1 and player2 for the match and create it
             player1 = list_of_players_sort_by_scores_ranks[0]
             player2 = list_of_players_sort_by_scores_ranks[index]
-            match = Match(player1, player2)
+            # Add the index in the instance attribut <players_already_played_index>
+            # for player 1 and player 2
             player1.add_already_played_index(self.players.index(player2))
             player2.add_already_played_index(self.players.index(player1))
+            # Add the match in the current round
+            match = Match(player1, player2)
             round.add_match(match)
-            # On retire de la liste temporaire les joueurs déjà en match
+            # Remove player1 and player2 from the tempory list (sort by score and rank)
             list_of_players_sort_by_scores_ranks.remove(player1)
             list_of_players_sort_by_scores_ranks.remove(player2)
         return round
 
     def add_round(self):
-        """Ajoute un round au tournoi"""
+        """Use the sub-functions get_first_round and get_next_round
+        to add a round"""
         round_name = f"Round {len(self.rounds)+1}"
         if len(self.rounds) == 0:
-            self.rounds.append(self.get_first_tour(round_name))
+            self.rounds.append(self.get_first_round(round_name))
         else:
-            self.rounds.append(self.get_next_tour(round_name))
+            self.rounds.append(self.get_next_round(round_name))
 
     def set_date_begin(self):
-        """Modifier la date et l'heure du début de tournoi"""
+        """Set the instance attribut <date_begin> at the beggining of the Round."""
         self.date_begin = time.strftime("%A %d %B %Y")
 
     def set_date_end(self):
-        """Modifier la date et l'heure de fin du tournoi"""
+        """Set the instance attribut <date_end> at the end of the Round."""
         self.date_end = time.strftime("%A %d %B %Y")
 
-    def serialized(self):
-        rounds_in_tournament_id = []
+    def serialized(self) -> Dict:
+        """Serialize an instance of a tournament.
+
+        Returns:
+            Dict: Serialization of an instance of a tournament.
+        """
+        rounds_in_tournament_ids = []
         players_in_tournament_ids = []
         for tour in self.rounds:
-            rounds_in_tournament_id.append(tour.id)
+            rounds_in_tournament_ids.append(tour.id)
         for player in self.players:
             players_in_tournament_ids.append(player.id)
 
@@ -129,7 +190,7 @@ class Tournament:
             "time_control": self.time_control,
             "description": self.description,
             "rounds_number": self.rounds_number,
-            "rounds_in_tournament_id": rounds_in_tournament_id,
+            "rounds_in_tournament_ids": rounds_in_tournament_ids,
             "date_begin": self.date_begin,
             "date_end": self.date_end,
             "players_in_tournament_ids": players_in_tournament_ids,
@@ -140,19 +201,36 @@ class Tournament:
 
     @classmethod
     def deserialized(
-        cls, serialized_tournament, rounds: List[Round], players: List[Player]
-    ):
-        rounds_in_tournament_ids = serialized_tournament["rounds_in_tournament_id"]
+        cls: Type[T],
+        serialized_tournament: Dict,
+        rounds: List[Round],
+        players: List[Player],
+    ) -> T:
+        """Deserialize a serialized tournament.
+
+        Args:
+            serialized_tournament (Dict): Serialization of an instance of a tournament.
+            rounds (List[Round]): List of all the instances of rounds.
+            players (List[Player]): List of all the instances of players.
+
+        Returns:
+            T: Instance of Tournament.
+        """
+        rounds_in_tournament_ids = serialized_tournament["rounds_in_tournament_ids"]
         players_in_tournament_ids = serialized_tournament["players_in_tournament_ids"]
         rounds_in_tournament = []
         players_in_tournament = []
 
+        # Build the list of rounds instances from the ids stored in rounds_in_tournament_ids
+        # and the list of all the rounds instances
         for rounds_in_tournament_id in rounds_in_tournament_ids:
             for round in rounds:
                 if rounds_in_tournament_id == round.id:
                     rounds_in_tournament.append(round)
                     break
 
+        # Build the list of players instances from the ids stored in players_in_tournament_ids
+        # and the list of all the players instances
         for players_in_tournament_id in players_in_tournament_ids:
             for player in players:
                 if players_in_tournament_id == player.id:

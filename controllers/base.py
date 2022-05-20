@@ -1,5 +1,6 @@
 import random
 from typing import List
+from xmlrpc.client import Boolean
 from models.player import Player
 from models.round import Round
 from models.match import Match
@@ -9,11 +10,41 @@ from views.base import View
 
 
 class Controller:
+    """Use the view and the models to build to create menu for the chess manager.
+    Instance attributes:
+        view: View
+        tournaments: List[Tournament]
+        tournament_active: Tournament
+        round_active: Round
+        match_active: Match
+    Instance methods:
+        option_menu_main(self)
+        option_menu_tournament(self)
+        option_menu_choose_tournament(self)
+        option_menu_tournament_action(self)
+        option_menu_reports(self)
+        option_menu_reports_choose_tournament(self)
+        option_menu_reports_detailed_tournament(self)
+        option_menu_reports_tournament_players(self)
+        option_add_a_round(self)
+        option_play_match(self)
+        option_modify_player_rank(self)
+        option_reports_all_actors(self)
+        option_create_tournament(self)
+        match_to_play(self)
+        round_to_play(self) -> Round
+        last_match_in_current_round(self, match: Match) -> Boolean
+        last_match_in_current_in_tournament(self, match: Match) -> Boolean
+        tournaments_in_progress(self) -> List[Tournament]
+        add_tournament_random_1(self)
+        add_tournament_random_2(self)
+        run(self)
+    """
+
     def __init__(self, view: View):
         self.view = view
         self.tournaments: List[Tournament] = []
         self.tournament_active: Tournament = None
-        self.tournament_simu: Tournament = None
         self.round_active: Round = None
         self.match_active: Match = None
 
@@ -21,14 +52,13 @@ class Controller:
     # Menu
     #####################
     def option_menu_main(self):
-        """Display the menu <Menu principal> on the terminal"""
+        """Display the menu <Menu principal> on the terminal."""
         user_input_menu_main = self.view.display_menu_main()
         if user_input_menu_main == 1:
             # Enter to the option: 1 - Tournoi
             self.option_menu_tournament()
         elif user_input_menu_main == 2:
             # Enter to the option: 2 - Sauvegarder les données
-            Database_tournament.clear_all_tab_in_db()
             Database_tournament.option_save_all_serialized_table_to_db(self.tournaments)
             self.option_menu_main()
         elif user_input_menu_main == 3:
@@ -42,18 +72,18 @@ class Controller:
             self.option_menu_reports()
 
     def option_menu_tournament(self):
-        """Display the menu <Tournoi> on the terminal"""
+        """Display the menu <Tournoi> on the terminal."""
         user_input_menu_option_tournament = self.view.display_menu_tournament()
         if user_input_menu_option_tournament == 1:
             # Enter to the option: 1 - Créer un tournoi
             self.option_create_tournament()
             self.option_menu_tournament()
         elif user_input_menu_option_tournament == 2:
-            # Enter to the option: 2 - Ajouter le tournoi random1
+            # Enter to the option: 2 - [SIMU] Ajouter le tournoi random1
             self.add_tournament_random_1()
             self.option_menu_tournament()
         elif user_input_menu_option_tournament == 3:
-            # Enter to the option: 3 - Ajouter le tournoi random2
+            # Enter to the option: 3 - [SIMU] Ajouter le tournoi random2
             self.add_tournament_random_2()
             self.option_menu_tournament()
         elif user_input_menu_option_tournament == 4:
@@ -64,7 +94,7 @@ class Controller:
             self.option_menu_main()
 
     def option_menu_choose_tournament(self):
-        """Display the menu <Choisir un tournoi> on the terminal"""
+        """Display the menu <Choisir un tournoi> on the terminal."""
         tournaments_in_progress = self.tournaments_in_progress()
         user_input_menu_option_tournament = self.view.display_menu_choose_tournament(
             tournaments_in_progress
@@ -80,7 +110,7 @@ class Controller:
             self.option_menu_tournament()
 
     def option_menu_tournament_action(self):
-        """Display the menu <Tournoi x> on the terminal"""
+        """Display the menu <Tournoi x> on the terminal."""
         user_input_menu_tournament_action = self.view.display_menu_tournament_action(
             self.tournament_active
         )
@@ -102,7 +132,7 @@ class Controller:
             self.option_menu_tournament()
 
     def option_menu_reports(self):
-        """Display the menu <Rapports> on the terminal"""
+        """Display the menu <Rapports> on the terminal."""
         user_input_menu_option_reports = self.view.display_menu_reports()
         if user_input_menu_option_reports == 1:
             # Enter to the option: 1 - Rapport détaillé sur un tournoi
@@ -120,7 +150,7 @@ class Controller:
             self.option_menu_main()
 
     def option_menu_reports_choose_tournament(self):
-        """Display the menu <Choisir un tournoi> on the terminal"""
+        """Display the menu <Choisir un tournoi> on the terminal."""
         user_input_menu_reports_all_tournament = (
             self.view.display_menu_report_choose_tournament(self.tournaments)
         )
@@ -135,7 +165,7 @@ class Controller:
             self.option_menu_reports()
 
     def option_menu_reports_detailed_tournament(self):
-        """Display the menu <Rapport détaillé sur le tournoi> on the terminal"""
+        """Display the menu <Rapport détaillé sur le tournoi> on the terminal."""
         user_input_menu_tournament_reports = self.view.display_menu_tournament_reports(
             self.tournament_active.name
         )
@@ -159,7 +189,7 @@ class Controller:
             self.option_menu_reports_choose_tournament()
 
     def option_menu_reports_tournament_players(self):
-        """Display the menu <Rapport joueurs du tournoi X> on the terminal"""
+        """Display the menu <Rapport joueurs du tournoi X> on the terminal."""
         user_input_menu_players_in_tournament_reports = (
             self.view.display_menu_players_in_tournament_reports(
                 self.tournament_active.name
@@ -186,6 +216,7 @@ class Controller:
     #######################
 
     def option_add_a_round(self):
+        """Add a round and set the begin time if the active round is finish and if the tournament is not finish, else display a message."""
         if self.tournament_active.finish is False:
             if self.round_active is None:
                 self.tournament_active.add_round()
@@ -198,6 +229,7 @@ class Controller:
             self.view.display_tournament_done()
 
     def option_play_match(self):
+        """Play a match if the active tournament is not finish and set the attributes finish and the end time for the tournament and the rounds."""
         if self.tournament_active.finish is True:
             self.view.display_tournament_done()
         elif self.match_active is None:
@@ -213,11 +245,12 @@ class Controller:
                 self.round_active.set_date_end()
                 self.tournament_active.set_date_end()
                 self.view.display_tournament_done()
-            elif self.last_match_in_current_tour(self.match_active):
+            elif self.last_match_in_current_round(self.match_active):
                 self.round_active.finish = True
                 self.round_active.set_date_end()
 
     def option_modify_player_rank(self):
+        """Option for modify a player rank in the active tournament."""
         user_input_menu_player_rank = self.view.display_menu_modify_player_rank(
             self.tournament_active
         )
@@ -230,12 +263,14 @@ class Controller:
             self.option_menu_tournament_action()
 
     def option_reports_all_actors(self):
+        """Collect all the actors in the database then display them."""
         actors = Database_tournament.deserialized_players(
             Database_tournament.load_serialized_from_db("player")
         )
         self.view.display_player_sorted_by_name(actors)
 
     def option_create_tournament(self):
+        """Ask the user some informations in order to create the tournament and to add/create 8 players."""
         list_input_infos_tournament = self.view.prompt_for_create_tournament()
         new_tournament = Tournament(
             list_input_infos_tournament[0],
@@ -243,6 +278,7 @@ class Controller:
             list_input_infos_tournament[2],
             list_input_infos_tournament[3],
         )
+        new_tournament.set_date_begin()
 
         list_info_players = self.view.prompt_for_add_players(8)
         for list_info_player in list_info_players:
@@ -254,20 +290,23 @@ class Controller:
                 list_info_player[4],
             )
             new_tournament.add_player(player)
-        new_tournament.set_date_begin()
+
         self.tournaments.append(new_tournament)
-        self.view.terminal_clear()
         self.view.display_player_sorted_by_rank_score(new_tournament.players)
         # !!!!!!!!!!!!!! TBD !!!!!!!!!!!!!!
         # Faire en sorte qu'on puisse ressortir de cette option
         # Faire en sorte qu'on puisse ajouter un joueur si la BD est chargé
 
-    #######################
-    # Option
-    #######################
+    ##########################
+    # Function used in option
+    ##########################
 
-    # Option for the menu "option_menu_tournament_action"
     def match_to_play(self):
+        """Search the match in progress.
+
+        Returns:
+            Round: First match in the list matchs of the active round which is not finish.
+        """
         if self.round_active is None:
             return None
         for match in self.round_active.matchs:
@@ -275,14 +314,26 @@ class Controller:
                 return match
         return None
 
-    def round_to_play(self):
+    def round_to_play(self) -> Round:
+        """Search the round in progress.
+
+        Returns:
+            Round: First round in the list rounds of the active tournament which is not finish.
+        """
         for round in self.tournament_active.rounds:
             if not round.finish:
                 return round
         return None
 
-    # Option for the menu "option_play_match"
-    def last_match_in_current_tour(self, match: Match):
+    def last_match_in_current_round(self, match: Match) -> Boolean:
+        """Determine if the match is the last match in the current round.
+
+        Args:
+            match (Match): Match instance.
+
+        Returns:
+            Boolean: True if the match is the last match in the current round.
+        """
         for index in range(len(self.round_active.matchs)):
             if ((self.round_active.matchs[index]) == match) and (
                 index == len(self.round_active.matchs) - 1
@@ -291,16 +342,28 @@ class Controller:
         else:
             return False
 
-    def last_match_in_current_in_tournament(self, match: Match):
+    def last_match_in_current_in_tournament(self, match: Match) -> Boolean:
+        """Determine if the match is the last match in the current tournament.
+
+        Args:
+            match (Match): Match instance.
+
+        Returns:
+            Boolean: True if the match is the last match in the current tournament.
+        """
         if (
             len(self.tournament_active.rounds) == self.tournament_active.rounds_number
-        ) and self.last_match_in_current_tour(match):
+        ) and self.last_match_in_current_round(match):
             return True
         else:
             return False
 
-    # Option for the menu "option_menu_choose_tournament"
-    def tournaments_in_progress(self):
+    def tournaments_in_progress(self) -> List[Tournament]:
+        """Find all the tournaments in progress.
+
+        Returns:
+            List[Tournament]: Tournaments in progress.
+        """
         tournaments_in_progress = []
         for tournament in self.tournaments:
             if tournament.finish is False:
@@ -311,6 +374,7 @@ class Controller:
     # Function for simulation
     ##########################
     def add_tournament_random_1(self):
+        """Add a random tournament with 8 players for simulation."""
         new_tournament = Tournament(
             "Tournoi Random1", "Paris", "Bullet", "Description du tounoi Random1"
         )
@@ -326,13 +390,14 @@ class Controller:
         new_tournament.add_player(
             Player("Jacqueline Riou", "Lemaitre", "04/23/89", "F")
         )
+        new_tournament.set_date_begin()
         for player in new_tournament.players:
             player.ranking = random.randint(1, 1000)
-        new_tournament.set_date_begin()
         self.tournaments.append(new_tournament)
         self.view.prompt_for_add_tournament_done()
 
     def add_tournament_random_2(self):
+        """Add a random tournament with 8 players for simulation."""
         new_tournament = Tournament(
             "Tournoi Random2", "Marseille", "Blitz", "Description du tounoi Random2"
         )
@@ -344,11 +409,12 @@ class Controller:
         new_tournament.add_player(Player("Emmanuelle ", "Bourgeois", "06/09/01", "M"))
         new_tournament.add_player(Player("Claude ", "Meunier", "03/27/96", "M"))
         new_tournament.add_player(Player("Elisabeth ", "Denis", "05/22/85", "F"))
+        new_tournament.set_date_begin()
         for player in new_tournament.players:
             player.ranking = random.randint(1, 1000)
-        new_tournament.set_date_begin()
         self.tournaments.append(new_tournament)
         self.view.prompt_for_add_tournament_done()
 
     def run(self):
+        """Run the main menu."""
         self.option_menu_main()

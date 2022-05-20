@@ -1,11 +1,30 @@
 import time
 import locale
-from typing import List
+from typing import List, Dict, Type, TypeVar
 from uuid import uuid4
 from .match import Match
 
+T = TypeVar("T", bound="Round")
+
 
 class Round:
+    """Class to represent a round in a tournament
+    Instance attributes:
+        name: str,
+        start_time: str
+        end_time: str
+        matchs: List[Match]
+        finish: boolean
+        id: str
+    Instance methods:
+        set_date_begin(self)
+        set_date_end(self)
+        add_match(self, match)
+        serialized(self) -> Dict
+    Class method:
+        deserialized(cls: Type[T], serialized_round: Dict, matchs: List[Match]) -> T
+    """
+
     def __init__(
         self,
         name: str,
@@ -32,18 +51,23 @@ class Round:
         return f"Tournoi {self.name}:\n" + str_matchs
 
     def set_date_begin(self):
-        """Modifier l'heure de départ du Round"""
+        """Set the instance attribut <date_begin> at the beggining of the Round."""
         self.date_begin = time.strftime("%A %d %B %Y %H:%M:%S")
 
     def set_date_end(self):
-        """Modifier l'heure de fin du Round"""
+        """Set the instance attribut <date_end> at the end of the Round."""
         self.date_end = time.strftime("%A %d %B %Y %H:%M:%S")
 
     def add_match(self, match):
-        """Ajouter un match au tournoi"""
+        """Add a match to the instance attribut <matchs>."""
         self.matchs.append(match)
 
-    def serialized(self):
+    def serialized(self) -> Dict:
+        """Serialize an instance of a round.
+
+        Returns:
+            Dict: Serialization of an instance of a round.
+        """
         matchs_in_round_ids = [match.id for match in self.matchs]
         serialized_round = {
             "name": self.name,
@@ -56,9 +80,20 @@ class Round:
         return serialized_round
 
     @classmethod
-    def deserialized(cls, serialized_round, matchs: List[Match]):
+    def deserialized(cls: Type[T], serialized_round: Dict, matchs: List[Match]) -> T:
+        """Deserialize a serialized round.
+
+        Args:
+            serialized_round (Dict): Serialization of an instance of a round.
+            matchs (List[Match]): List of all the instances of matches.
+
+        Returns:
+            T: Instance of Round.
+        """
         matchs_in_round_ids = serialized_round["matchs_in_round_ids"]
         matchs_in_round = []
+        # Build the list of Matches instances from the ids stored in matchs_in_round_ids
+        # and the list of all the matches instances
         for match_in_round_id in matchs_in_round_ids:
             for match in matchs:
                 if match_in_round_id == match.id:

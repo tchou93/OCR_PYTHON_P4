@@ -57,8 +57,8 @@ class View:
     def display_menu_tournament(self):
         menu_tournament = [
             "Créer un tournoi",
-            "Ajouter le tournoi random1",
-            "Ajouter le tournoi random2",
+            "[SIMU] Ajouter le tournoi random1",
+            "[SIMU] Ajouter le tournoi random2",
             "Continuer un tournoi",
             "Retour au menu principal",
         ]
@@ -141,6 +141,7 @@ class View:
         user_input_option = self.display_menu_generic(
             "Modification du classement", menu_players_ranks
         )
+
         if user_input_option != len(players) + 1:
             user_input_rank = input(
                 "Entrer le nouveau classement pour le joueur"

@@ -1,9 +1,26 @@
-from typing import List, Dict
+from typing import List, Dict, Type, TypeVar
 from uuid import uuid4
 from .player import Player
 
+T = TypeVar("T", bound="Match")
+
 
 class Match:
+    """Class to represent a match in a tournament
+    Instance attributes:
+        player1: Player
+        player2: Player
+        resultplayer1: str
+        resultplayer2: str
+        finish: boolean
+        id: str
+    Instance methods:
+        results_match(self, result: int)
+        serialized(self) -> Dict
+    Class method:
+        deserialized(cls: Type[T], serialized_match: Dict, players: List[Player]) -> T
+    """
+
     def __init__(
         self,
         player1: Player,
@@ -27,13 +44,13 @@ class Match:
             ",[{self.player2.first_name} {self.player2.last_name},{self.resultplayer2}]"
         )
 
-    def get_match(self):
-        return ([self.player1, self.resultplayer1], [self.player2, self.resultplayer2])
+    def results_match(self, result: int):
+        """Take the result of the match with the parameter <result>
+        then call the function win/lost of the players
+        finally set the instance attribute <resultplayer>.
 
-    def results_match(self, result: int) -> None:
-        """
-        Selon le résultat du match rentré en paramètre, la fonction met à jour le score
-        de chaque joueur et rempli leurs champs de résultat.
+        Args:
+            result (int): 1 => player1 win, 2 => player2 win, 3 => draw.
         """
         if result == 1:
             self.player1.win()
@@ -53,6 +70,11 @@ class Match:
         self.finish = True
 
     def serialized(self) -> Dict:
+        """Serialize an instance of a match.
+
+        Returns:
+            Dict: Serialization of an instance of a match.
+        """
         serialized_match = {
             "player1_id": self.player1.id,
             "player2_id": self.player2.id,
@@ -64,7 +86,18 @@ class Match:
         return serialized_match
 
     @classmethod
-    def deserialized(cls, serialized_match: Dict, players: List[Player]):
+    def deserialized(cls: Type[T], serialized_match: Dict, players: List[Player]) -> T:
+        """Deserialize a serialized match.
+
+        Args:
+            serialized_match (Dict): Serialization of an instance of a match.
+            players (List[Player]): List of all the instances of players.
+
+        Returns:
+            T: Instance of Match.
+        """
+        # Find the player1 and player2 instances from the ids stored in player1_id and player2_id
+        # and the list of all the players instances
         for player in players:
             if player.id == serialized_match["player1_id"]:
                 player1 = player
