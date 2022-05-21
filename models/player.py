@@ -51,7 +51,7 @@ class Player:
         """Used for print."""
         return (
             f"Nom : {self.first_name}, Prénom : {self.last_name}, Date de naissance : {self.birthday}"
-            ", Genre : {self.gender}, Classement : {self.ranking} \n"
+            f", Genre : {self.gender}, Classement : {self.ranking} \n"
         )
 
     def win(self):
@@ -116,3 +116,8 @@ class Player:
             players_already_played_index,
             id,
         )
+
+
+if __name__ == "__main__":
+    player = Player("Inès-Corinne", "Voisin", "03/19/85", "M")
+    print(player)

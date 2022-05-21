@@ -1,3 +1,11 @@
+from os import getcwd
+from sys import path
+
+try:
+    path.insert(1, getcwd())
+except IndexError:
+    pass
+
 import random
 from typing import List
 from xmlrpc.client import Boolean
@@ -178,7 +186,7 @@ class Controller:
             self.option_menu_reports_tournament_players()
         elif user_input_menu_tournament_reports == 3:
             # Enter to the option: 3 - Liste des rounds du tournoi
-            self.view.display_tour(self.tournament_active)
+            self.view.display_round(self.tournament_active)
             self.option_menu_reports_detailed_tournament()
         elif user_input_menu_tournament_reports == 4:
             # Enter to the option: 4 - Liste des matchss du tournoi
@@ -216,7 +224,8 @@ class Controller:
     #######################
 
     def option_add_a_round(self):
-        """Add a round and set the begin time if the active round is finish and if the tournament is not finish, else display a message."""
+        """Add a round and set the begin time if the active round is finish and
+        if the tournament is not finish, else display a message."""
         if self.tournament_active.finish is False:
             if self.round_active is None:
                 self.tournament_active.add_round()
@@ -229,7 +238,8 @@ class Controller:
             self.view.display_tournament_done()
 
     def option_play_match(self):
-        """Play a match if the active tournament is not finish and set the attributes finish and the end time for the tournament and the rounds."""
+        """Play a match if the active tournament is not finish and set the attributes
+        finish and the end time for the tournament and the rounds."""
         if self.tournament_active.finish is True:
             self.view.display_tournament_done()
         elif self.match_active is None:
@@ -418,3 +428,7 @@ class Controller:
     def run(self):
         """Run the main menu."""
         self.option_menu_main()
+
+
+if __name__ == "__main__":
+    print("test")

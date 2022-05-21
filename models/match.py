@@ -1,6 +1,14 @@
+from os import getcwd
+from sys import path
+
+try:
+    path.insert(1, getcwd())
+except IndexError:
+    pass
+
 from typing import List, Dict, Type, TypeVar
 from uuid import uuid4
-from .player import Player
+from models.player import Player
 
 T = TypeVar("T", bound="Match")
 
@@ -41,7 +49,7 @@ class Match:
         """Used for print."""
         return (
             f"[{self.player1.first_name} {self.player1.last_name},{self.resultplayer1}]"
-            ",[{self.player2.first_name} {self.player2.last_name},{self.resultplayer2}]"
+            f",[{self.player2.first_name} {self.player2.last_name},{self.resultplayer2}]\n"
         )
 
     def results_match(self, result: int):
@@ -108,3 +116,11 @@ class Match:
         finish = serialized_match["finish"]
         id = serialized_match["id"]
         return cls(player1, player2, resultplayer1, resultplayer2, finish, id)
+
+
+if __name__ == "__main__":
+    player1 = Player("Inès-Corinne", "Voisin", "03/19/85", "M")
+    player2 = Player("Léon", "Aubry", "02/04/00", "F")
+    match = Match(player1, player2)
+    match.results_match(1)
+    print(match)

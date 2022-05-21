@@ -1,3 +1,11 @@
+from os import getcwd
+from sys import path
+
+try:
+    path.insert(1, getcwd())
+except IndexError:
+    pass
+
 from ast import Dict
 from typing import List
 from tinydb import TinyDB
@@ -16,7 +24,8 @@ class Database_tournament:
         deserialized_players(cls, serialized_players: List[Dict]) -> List[Player]
         deserialized_matchs(cls, serialized_matchs: List[Dict], players: List[Player]) -> List[Match]
         deserialized_tours(cls, serialized_tours: List[Dict], matchs: List[Match]) -> List[Round]
-        deserialized_tournaments(cls, serialized_tournaments: List[Dict], rounds: List[Round], players: List[Player]) -> List[Tournament]
+        deserialized_tournaments(cls, serialized_tournaments: List[Dict], rounds: List[Round],
+        players: List[Player]) -> List[Tournament]
         option_save_serialized_table_to_db(cls, serialized_items: List, table_name: str)
         load_serialized_from_db(cls, table_name: str) -> List[Dict]
         option_load_from_db(cls) -> List[Tournament]
@@ -192,3 +201,7 @@ class Database_tournament:
                     cls.serialized_items(round.matchs), "match"
                 )
         # cls.view.display_save_to_database_done()
+
+
+if __name__ == "__main__":
+    print("test")

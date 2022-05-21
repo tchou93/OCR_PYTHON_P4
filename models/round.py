@@ -1,8 +1,17 @@
+from os import getcwd
+from sys import path
+
+try:
+    path.insert(1, getcwd())
+except IndexError:
+    pass
+
 import time
 import locale
 from typing import List, Dict, Type, TypeVar
 from uuid import uuid4
-from .match import Match
+from models.match import Match
+from models.player import Player
 
 T = TypeVar("T", bound="Round")
 
@@ -44,11 +53,10 @@ class Round:
 
     def __repr__(self):
         """Used for print."""
-        str_matchs = f"Round {self.name} : "
+        str_matchs = f"{self.name} : "
         for match in self.matchs:
             str_matchs += str(match) + " "
-        str_matchs += "\n"
-        return f"Tournoi {self.name}:\n" + str_matchs
+        return str_matchs
 
     def set_date_begin(self):
         """Set the instance attribut <date_begin> at the beggining of the Round."""
@@ -107,3 +115,18 @@ class Round:
         finish = serialized_round["finish"]
         id = serialized_round["id"]
         return cls(name, date_begin, date_end, matchs, finish, id)
+
+
+if __name__ == "__main__":
+    player1 = Player("Inès-Corinne", "Voisin", "03/19/85", "M")
+    player2 = Player("Léon", "Aubry", "02/04/00", "F")
+    player3 = Player("Michelle ", "Hardy", "09/10/98", "F")
+    player4 = Player("Denise Martineau", "Renault", "02/26/90", "M")
+    match1 = Match(player1, player2)
+    match1.results_match(1)
+    match2 = Match(player1, player2)
+    match2.results_match(3)
+    round = Round("Round test")
+    round.add_match(match1)
+    round.add_match(match2)
+    print(round)

@@ -1,3 +1,11 @@
+from os import getcwd
+from sys import path
+
+try:
+    path.insert(1, getcwd())
+except IndexError:
+    pass
+
 import time
 import locale
 from uuid import uuid4
@@ -66,7 +74,7 @@ class Tournament:
         """Used for print."""
         description_tournament = (
             f"Nom du tournoi : {self.name}, Lieu : {self.place}, Date: {self.date_begin}"
-            " - {self.date_end}, contrôle de temps : {self.time_control}, Description : {self.description} \n"
+            f" - {self.date_end}, contrôle de temps : {self.time_control}, Description : {self.description} \n"
         )
         return description_tournament
 
@@ -261,3 +269,12 @@ class Tournament:
             finish,
             id,
         )
+
+
+if __name__ == "__main__":
+    new_tournament = Tournament(
+        "Tournoi Random1", "Paris", "Bullet", "Description du tounoi Random1"
+    )
+    new_tournament.set_date_begin()
+    new_tournament.set_date_end()
+    print(new_tournament)
