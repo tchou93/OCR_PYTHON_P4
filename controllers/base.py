@@ -10,7 +10,7 @@ from views.base import View
 
 
 class Controller:
-    """Use the view and the models to build to create menu for the chess manager.
+    """Use the view and the models to build menu for the chess manager.
     Instance attributes:
         view: View
         tournaments: List[Tournament]

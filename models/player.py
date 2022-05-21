@@ -89,7 +89,7 @@ class Player:
         return serialized_player
 
     @classmethod
-    def deserialized(cls: Type[T], serialized_player) -> T:
+    def deserialized(cls: Type[T], serialized_player: Dict) -> T:
         """Deserialize a serialized player.
 
         Args:
