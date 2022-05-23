@@ -7,7 +7,7 @@ except IndexError:
     pass
 
 from ast import Dict
-from typing import List
+from typing import List, Tuple
 from tinydb import TinyDB
 from models.player import Player
 from models.round import Round
@@ -16,21 +16,7 @@ from models.tournament import Tournament
 
 
 class Database_tournament:
-    """Database to save and load all the objects.
-    class attribut:
-        db: json format
-    class methods:
-        serialized_items(cls, items: List) -> List[Dict]
-        deserialized_players(cls, serialized_players: List[Dict]) -> List[Player]
-        deserialized_matchs(cls, serialized_matchs: List[Dict], players: List[Player]) -> List[Match]
-        deserialized_tours(cls, serialized_tours: List[Dict], matchs: List[Match]) -> List[Round]
-        deserialized_tournaments(cls, serialized_tournaments: List[Dict], rounds: List[Round],
-        players: List[Player]) -> List[Tournament]
-        option_save_serialized_table_to_db(cls, serialized_items: List, table_name: str)
-        load_serialized_from_db(cls, table_name: str) -> List[Dict]
-        option_load_from_db(cls) -> List[Tournament]
-        option_save_all_serialized_table_to_db(cls, tournaments: List[Tournament])
-    """
+    """Database to save and load all the objects."""
 
     db = TinyDB("db_chess_tournament.json")
 
@@ -153,54 +139,55 @@ class Database_tournament:
         return load_table.all()
 
     @classmethod
-    def option_load_from_db(cls) -> List[Tournament]:
+    def option_load_from_db(cls) -> Tuple[List[Tournament], List[Player]]:
         """Deserialized all the table from the database to create the
         tournaments.
 
         Returns:
-            List[Tournament]: Instance of the tournaments build by the database.
+            Tuple[List[Tournament], List[Player]]: Tuple with a list of tournaments,
+            and list of actors build by the database.
         """
-        try:
-            players = cls.deserialized_players(cls.load_serialized_from_db("player"))
-            matchs = cls.deserialized_matchs(
-                cls.load_serialized_from_db("match"), players
-            )
-            rounds = cls.deserialized_tours(
-                cls.load_serialized_from_db("round"), matchs
-            )
-            tournaments = cls.deserialized_tournaments(
-                cls.load_serialized_from_db("tournament"), rounds, players
-            )
-            # cls.view.prompt_for_continue()
-            # cls.view.display_load_from_database_done()
-            return tournaments
-        except IndexError:
-            # cls.view.display_load_from_database_error()
-            return None
+
+        actors = cls.deserialized_players(cls.load_serialized_from_db("player"))
+        matchs = cls.deserialized_matchs(cls.load_serialized_from_db("match"), actors)
+        rounds = cls.deserialized_tours(cls.load_serialized_from_db("round"), matchs)
+        tournaments = cls.deserialized_tournaments(
+            cls.load_serialized_from_db("tournament"), rounds, actors
+        )
+        if not tournaments:
+            return (None, None)
+        else:
+            return (tournaments, actors)
 
     @classmethod
-    def option_save_all_serialized_table_to_db(cls, tournaments: List[Tournament]):
+    def option_save_all_serialized_table_to_db(
+        cls, tournaments: List[Tournament], actors: List[Player]
+    ):
         """Save all the table to the database from the instances of tournament.
 
         Args:
             tournaments (List[Tournament]): List of tournament instance  .
         """
-        cls.db.drop_tables()
-        cls.option_save_serialized_table_to_db(
-            cls.serialized_items(tournaments), "tournament"
-        )
-        for tournament in tournaments:
+        if not tournaments:
+            return False
+        else:
+            cls.db.drop_tables()
             cls.option_save_serialized_table_to_db(
-                cls.serialized_items(tournament.rounds), "round"
+                cls.serialized_items(tournaments), "tournament"
             )
-            cls.option_save_serialized_table_to_db(
-                cls.serialized_items(tournament.players), "player"
-            )
-            for round in tournament.rounds:
+            for tournament in tournaments:
                 cls.option_save_serialized_table_to_db(
-                    cls.serialized_items(round.matchs), "match"
+                    cls.serialized_items(tournament.rounds), "round"
                 )
-        # cls.view.display_save_to_database_done()
+
+                for round in tournament.rounds:
+                    cls.option_save_serialized_table_to_db(
+                        cls.serialized_items(round.matchs), "match"
+                    )
+            cls.option_save_serialized_table_to_db(
+                cls.serialized_items(actors), "player"
+            )
+            return True
 
 
 if __name__ == "__main__":

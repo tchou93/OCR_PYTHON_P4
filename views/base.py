@@ -8,6 +8,7 @@ except IndexError:
 
 import os
 import time
+import copy
 from datetime import datetime
 from typing import List, Tuple
 from xmlrpc.client import boolean
@@ -19,67 +20,7 @@ from models.tournament import Tournament
 
 
 class View:
-    """Used to display/asks some informations for users
-    Instance methods:
-        - Display the menu:
-        display_menu_generic(self, menu_title: str, menu_options: List[str]) -> int
-        display_menu_main(self) -> int
-        display_menu_tournament(self) -> int
-        display_menu_reports(self) -> int
-        display_menu_tournament_reports(self, tournament_name: str) -> int
-        display_menu_players_in_tournament_reports(self, tournament_name: str) -> int
-        display_menu_choose_tournament(
-        display_menu_tournament_action(self, tournament: Tournament) -> int
-        display_menu_add_score(self, match: Match) -> int
-        display_menu_modify_player_rank(self, tournament: Tournament) -> Tuple[int, int]:
-        display_menu_report_choose_tournament(self, tounaments: List[Tournament]) -> int:
-        display_message(self, message: str)
-        display_input_error(self)
-        display_tournament_done(self)
-        display_tour_done(self)
-        display_tour_not_done(self)
-        display_save_to_database_done(self)
-        display_load_from_database_done(self)
-        display_load_from_database_error(self)
-        - Function for prompt validity:
-        check_input_number_of_players(self, input_number: int) -> boolean
-        check_input_range(self, input_number: int) -> boolean
-        check_input_text(self, input_text: str) -> boolean
-        check_input_time_control(self, input_time_control: str) -> boolean
-        check_input_validity_genre(self, input_genre: str) -> boolean
-        check_input_validity_birthday(self, birthday: str) -> boolean
-        check_validity_items(self, items, items_check) -> boolean
-        - Function for prompt:
-        prompt_generic(self, prompt_title: str, items: List[str]) -> List[str]
-        prompt_with_check_type_generic(self, items_prompt, prompt_title, items_check) -> List[str]
-        prompt_for_add_player(self, index) -> List[str]
-        prompt_for_create_tournament(self) -> List[str]
-        prompt_for_add_players(self, number_of_players) -> List[List[str]]
-        prompt_for_continue(self)
-        prompt_for_add_tournament_done(self)
-        prompt_for_confirmation(self) -> boolean
-        - Function for display information tournament:
-        display_information_tournament(self, information: str)
-        display_all_information_tournament(self, tournament: Tournament)
-        display_round(self, tournament: Tournament)
-        display_matchs(self, tournament: Tournament)
-        display_player_sorted_by_rank_score(self, players: List[Player])
-        display_player_sorted_by_rank(self, players: List[Player], tournament_name: str = None)
-        display_player_sorted_by_name(self, players: List[Player], tournament_name: str = None)
-        display_tournaments_sorted_by_name(self, tournaments: List[Tournament])
-        display_tournament_infos(self, tournament: Tournament)
-        get_all_information_tournament(self, tournament: Tournament) -> str
-        get_string_round(self, tournament: Tournament) -> str
-        get_string_matchs(self, tournament: Tournament) -> str
-        get_string_player_sorted_by_rank_score(self, players: List[Player]) -> str
-        get_string_player_sorted_by_rank(self, players: List[Player], tournament_name: str) -> str
-        get_string_player_sorted_by_name(self, players: List[Player], tournament_name: str = None) -> str
-        get_string_tournaments_sorted_by_name(self, tournaments: List[Tournament]) -> str
-        get_string_tournament_infos(self, tournament: Tournament) -> str
-        - Function diverse:
-        terminal_clear(self)
-        display_banner(self)
-    """
+    """Used to display/asks some informations for users"""
 
     def __init__(self):
         pass
@@ -116,6 +57,25 @@ class View:
             "Quitter",
         ]
         return self.display_menu_generic("Menu principal", menu_main)
+
+    def display_menu_add_players(self, num_player_to_add) -> int:
+        """Display the main menu."""
+        menu_add_players = [
+            "Ajouter un acteur",
+            "Créer un joueur",
+            "Quitter",
+        ]
+        return self.display_menu_generic(
+            f"Ajouter {num_player_to_add} joueurs", menu_add_players
+        )
+
+    def display_menu_add_actor(self, actors: List[Player]) -> int:
+        """Display the menu to add actor."""
+        items = []
+        for actor in actors:
+            items.append(f"{actor.first_name} {actor.last_name}")
+        items.append("Retour au menu d'ajout de joueur")
+        return self.display_menu_generic("Choisir un acteur", items)
 
     def display_menu_tournament(self) -> int:
         """Display the menu tournament."""
@@ -276,6 +236,11 @@ class View:
         message = "La sauvegarde dans la base de donnée a été effectuée dans le fichier db_chess_tournament.json"
         self.display_message(message)
 
+    def display_save_to_database_error(self):
+        """Display a message to indicate that the save to database cannot be process."""
+        message = "La sauvegarde de la base de donnée n'a pas pu se faire, le tournoi est vide?"
+        self.display_message(message)
+
     def display_load_from_database_done(self):
         """Display a message to indicate that the load from database is done."""
         message = "Le chargement de la base de donnée a été effectuée à partir du fichier db_chess_tournament.json "
@@ -298,15 +263,24 @@ class View:
             return True
         return False
 
-    def check_input_range(self, input_number: int) -> boolean:
+    def check_input_rank(self, input_number: int, existing_ranks: List[int]) -> boolean:
         """check the validity when the user enter a range."""
         if input_number.isnumeric:
-            return True
+            if int(input_number) not in existing_ranks:
+                return True
         return False
 
     def check_input_text(self, input_text: str) -> boolean:
         """check the validity when the user enter a text."""
         if input_text == "":
+            return False
+        return True
+
+    def check_input_tournament_name(
+        self, input_text: str, tournaments_names: List[str]
+    ) -> boolean:
+        """check the validity when the user enter a tournament_name."""
+        if input_text in tournaments_names:
             return False
         return True
 
@@ -333,18 +307,23 @@ class View:
             return False
         return True
 
-    def check_validity_items(self, items, items_check) -> boolean:
+    def check_validity_items(
+        self, items, items_check, tournaments_names=[], existing_ranks=[]
+    ) -> boolean:
         """check the validity of some items. If all the items are valid,
         return true."""
         for i in range(len(items)):
             if items_check[i] == "check_input_number_of_players":
                 if not self.check_input_number_of_players(items[i]):
                     return False
-            elif items_check[i] == "check_input_range":
-                if not self.check_input_range(items[i]):
+            elif items_check[i] == "check_input_rank":
+                if not self.check_input_rank(items[i], existing_ranks=existing_ranks):
                     return False
             elif items_check[i] == "check_input_text":
                 if not self.check_input_text(items[i]):
+                    return False
+            elif items_check[i] == "check_input_tournament_name":
+                if not self.check_input_tournament_name(items[i], tournaments_names):
                     return False
             elif items_check[i] == "check_input_time_control":
                 if not self.check_input_time_control(items[i]):
@@ -373,7 +352,12 @@ class View:
         return list_input
 
     def prompt_with_check_type_generic(
-        self, items_prompt, prompt_title, items_check
+        self,
+        items_prompt,
+        prompt_title,
+        items_check,
+        tournaments_names=[],
+        existing_ranks=[],
     ) -> List[str]:
         """This function asks to user some informations define on <items_prompt>,
         check if all the informations are valids, and if there is a confirmation
@@ -383,7 +367,9 @@ class View:
         while not confirmation:
             while not check_validity:
                 items = self.prompt_generic(prompt_title, items_prompt)
-                if self.check_validity_items(items, items_check):
+                if self.check_validity_items(
+                    items, items_check, tournaments_names, existing_ranks
+                ):
                     break
                 else:
                     self.display_input_error()
@@ -391,7 +377,7 @@ class View:
                 confirmation = True
         return items
 
-    def prompt_for_add_player(self, index) -> List[str]:
+    def prompt_for_add_player(self, existing_ranks: List[int]) -> List[str]:
         """This function asks/verify informations to add a player enter by a user.
         Returns the list of the inputs."""
         items_prompt = [
@@ -406,14 +392,15 @@ class View:
             "check_input_text",
             "check_input_validity_birthday",
             "check_input_validity_genre",
-            "check_input_range",
+            "check_input_rank",
         ]
-        prompt_title = f"Ajouter le Joueur {index}:"
+        prompt_title = "Ajouter le Joueur: \n[Info] Choisissez un"
+        f" classement différent d'un déjà existant({str(existing_ranks)})"
         return self.prompt_with_check_type_generic(
-            items_prompt, prompt_title, items_check
+            items_prompt, prompt_title, items_check, existing_ranks=existing_ranks
         )
 
-    def prompt_for_create_tournament(self) -> List[str]:
+    def prompt_for_create_tournament(self, tournaments_names) -> List[str]:
         """This function asks/verify informations to create a tournament enter by a user.
         Returns the list of the inputs."""
         items_prompt = [
@@ -423,23 +410,15 @@ class View:
             "Description : ",
         ]
         items_check = [
-            "check_input_text",
+            "check_input_tournament_name",
             "check_input_text",
             "check_input_time_control",
             "check_input_text",
         ]
         prompt_title = "Créer un tournoi"
         return self.prompt_with_check_type_generic(
-            items_prompt, prompt_title, items_check
+            items_prompt, prompt_title, items_check, tournaments_names
         )
-
-    def prompt_for_add_players(self, number_of_players) -> List[List[str]]:
-        """This function asks/verify informations to add players enter by a user.
-        Returns the list of the inputs."""
-        list_info_players = []
-        for index in range(number_of_players):
-            list_info_players.append(self.prompt_for_add_player(index + 1))
-        return list_info_players
 
     def prompt_for_continue(self):
         """This function is used to see a specific display before a clear
@@ -450,6 +429,18 @@ class View:
         """This function is used to see a message that a tournament is done"""
         input(
             "Ajout du tournoi terminé, veuillez appuyer sur une touche pour continuer"
+        )
+
+    def prompt_for_tournaments_not_finish(self):
+        """This function is used to see a message when at least one tournament is not finish."""
+        input(
+            "La création de tournoi n'est pas possible, tous les tournois ne sont pas terminés."
+        )
+
+    def prompt_for_no_actors(self):
+        """This function is used to see a message that there are no actors"""
+        input(
+            "Il n'y a plus ou pas encore d'acteur disponible, veuillez appuyer sur une touche pour continuer"
         )
 
     def prompt_for_confirmation(self) -> boolean:
@@ -488,10 +479,10 @@ class View:
         """Display all the information concerning matchs."""
         self.display_information_tournament(self.get_string_matchs(tournament))
 
-    def display_player_sorted_by_rank_score(self, players: List[Player]):
+    def display_player_sorted_by_rank_score(self, tournament: Tournament):
         """Display players sorted by rank and score."""
         self.display_information_tournament(
-            self.get_string_player_sorted_by_rank_score(players)
+            self.get_string_player_sorted_by_rank_score(tournament)
         )
 
     def display_player_sorted_by_rank(
@@ -527,7 +518,7 @@ class View:
         display_tournament = self.get_string_tournament_infos(tournament)
         display_round = self.get_string_round(tournament)
         display_player_sorted_by_rank_score = (
-            self.get_string_player_sorted_by_rank_score(tournament.players)
+            self.get_string_player_sorted_by_rank_score(tournament)
         )
         return display_tournament + display_round + display_player_sorted_by_rank_score
 
@@ -568,7 +559,7 @@ class View:
             for match in round.matchs:
                 matchs_display = (
                     f"{match.player1.first_name} {match.player1.last_name} ({match.resultplayer1})"
-                    f"vs {match.player2.first_name} {match.player2.last_name} ({match.resultplayer2})"
+                    f" vs {match.player2.first_name} {match.player2.last_name} ({match.resultplayer2})"
                 )
                 if match.finish is True:
                     status_match = "Terminé"
@@ -577,9 +568,20 @@ class View:
                 table.append([matchs_display, status_match])
         return str(tabulate(table, headers="firstrow", tablefmt="grid") + "\n")
 
-    def get_string_player_sorted_by_rank_score(self, players: List[Player]) -> str:
+    def get_string_player_sorted_by_rank_score(self, tournament: Tournament) -> str:
         """Get the string of players sorted by rank and score."""
-        players_sorted_rank = sorted(players, key=lambda p: p.ranking)
+        if not tournament.finish:
+            players_sorted_rank = sorted(tournament.players, key=lambda p: p.ranking)
+        else:
+            players_with_tournament_scores = copy.deepcopy(tournament.players)
+            for index in range(len(players_with_tournament_scores)):
+                players_with_tournament_scores[
+                    index
+                ].score = tournament.save_points_players[index]
+            players_sorted_rank = sorted(
+                players_with_tournament_scores, key=lambda p: p.ranking
+            )
+
         players_sorted_rank_score = sorted(
             players_sorted_rank, key=lambda p: p.score, reverse=True
         )

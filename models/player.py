@@ -5,25 +5,7 @@ T = TypeVar("T", bound="Player")
 
 
 class Player:
-    """Class to represent a player in a tournament
-    Instance attributes:
-        first_name: str
-        last_name: str
-        birthday: str
-        gender: str
-        ranking: int
-        score: int
-        players_already_played_index: List[Int]
-        id: str
-    Instance methods:
-        win(self)
-        lost(self)
-        draw(self)
-        add_already_played_index(self, index_player: int)
-        serialized(self)
-    Class method:
-        deserialized(cls: Type[T], serialized_player) -> T
-    """
+    """Class to represent a player in a tournament"""
 
     def __init__(
         self,
@@ -32,7 +14,7 @@ class Player:
         birthday: str,
         gender: str,
         ranking=0,
-        score=0,
+        score=0.0,
         players_already_played_index=None,
         id=None,
     ):
@@ -87,6 +69,9 @@ class Player:
             "id": self.id,
         }
         return serialized_player
+
+    def reset_score(self):
+        self.score = 0
 
     @classmethod
     def deserialized(cls: Type[T], serialized_player: Dict) -> T:

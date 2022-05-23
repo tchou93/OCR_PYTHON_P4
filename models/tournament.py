@@ -18,30 +18,7 @@ T = TypeVar("T", bound="Tournament")
 
 
 class Tournament:
-    """Class to represent a tournament
-    Instance attributes:
-        name: str
-        place: str
-        time_control: str
-        description: str
-        rounds_number: int
-        rounds: List[Round]
-        date_begin: str
-        date_end: str
-        players: List[Player]
-        finish: Boolean
-        id: str
-    Instance methods:
-        add_player(self, player)
-        get_first_round(self, round_name)
-        get_next_round(self, round_name)
-        add_round(self)
-        set_date_begin(self)
-        set_date_end(self)
-        serialized(self)
-    Class method:
-        deserialized(cls: Type[T], serialized_tournament, rounds: List[Round], players: List[Player]) -> T
-    """
+    """Class to represent a tournament"""
 
     def __init__(
         self,
@@ -56,6 +33,7 @@ class Tournament:
         players=None,
         finish=False,
         id=None,
+        save_points_players: List[float] = None,
     ):
         self.name = name
         self.place = place
@@ -68,6 +46,9 @@ class Tournament:
         self.players: List[Player] = [] if players is None else players
         self.finish: bool = finish
         self.id = str(uuid4()) if id is None else id
+        self.save_points_players: List[float] = (
+            [] if save_points_players is None else save_points_players
+        )
         locale.setlocale(locale.LC_ALL, "fr_FR")
 
     def __repr__(self):
@@ -204,6 +185,7 @@ class Tournament:
             "players_in_tournament_ids": players_in_tournament_ids,
             "finish": self.finish,
             "id": self.id,
+            "save_points_players": self.save_points_players,
         }
         return serialized_tournament
 
@@ -256,6 +238,7 @@ class Tournament:
         players_in_tournament = players_in_tournament
         finish = serialized_tournament["finish"]
         id = serialized_tournament["id"]
+        save_points_players = serialized_tournament["save_points_players"]
         return cls(
             name,
             place,
@@ -268,6 +251,7 @@ class Tournament:
             players_in_tournament,
             finish,
             id,
+            save_points_players,
         )
 
 

@@ -17,22 +17,7 @@ T = TypeVar("T", bound="Round")
 
 
 class Round:
-    """Class to represent a round in a tournament
-    Instance attributes:
-        name: str,
-        start_time: str
-        end_time: str
-        matchs: List[Match]
-        finish: boolean
-        id: str
-    Instance methods:
-        set_date_begin(self)
-        set_date_end(self)
-        add_match(self, match)
-        serialized(self) -> Dict
-    Class method:
-        deserialized(cls: Type[T], serialized_round: Dict, matchs: List[Match]) -> T
-    """
+    """Class to represent a round in a tournament"""
 
     def __init__(
         self,

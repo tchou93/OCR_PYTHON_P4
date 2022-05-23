@@ -14,20 +14,7 @@ T = TypeVar("T", bound="Match")
 
 
 class Match:
-    """Class to represent a match in a tournament
-    Instance attributes:
-        player1: Player
-        player2: Player
-        resultplayer1: str
-        resultplayer2: str
-        finish: boolean
-        id: str
-    Instance methods:
-        results_match(self, result: int)
-        serialized(self) -> Dict
-    Class method:
-        deserialized(cls: Type[T], serialized_match: Dict, players: List[Player]) -> T
-    """
+    """Class to represent a match in a tournament"""
 
     def __init__(
         self,
