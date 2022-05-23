@@ -18,7 +18,7 @@ from models.tournament import Tournament
 class Database_tournament:
     """Database to save and load all the objects."""
 
-    db = TinyDB("db_chess_tournament.json")
+    db = TinyDB("data/db_chess_tournament.json")
 
     @classmethod
     def serialized_items(cls, items: List) -> List[Dict]:
