@@ -25,8 +25,6 @@ python main.py
 ```
 
 ## See the graph of all the menus and some screenshots of the program at bellow
-![menu_chess_maanager](img_github/menu_chess_maanager.jpg)
-![main](img_github/main.jpg)
-![add_player](img_github/add_player.jpg)
 ![display_all](img_github/display_all.jpg)
-![Round1_tournament](img_github/Round1_tournament.jpg)
+![menu_chess_manager](img_github/menu_chess_manager.jpg)
+
