@@ -394,8 +394,10 @@ class View:
             "check_input_validity_genre",
             "check_input_rank",
         ]
-        prompt_title = "Ajouter le Joueur: \n[Info] Choisissez un"
-        f" classement différent d'un déjà existant({str(existing_ranks)})"
+        prompt_title = "Ajouter le Joueur: \n[Info] Choisissez un classement"
+        prompt_title = (
+            prompt_title + f" différent d'un déjà existant({str(existing_ranks)})"
+        )
         return self.prompt_with_check_type_generic(
             items_prompt, prompt_title, items_check, existing_ranks=existing_ranks
         )
