@@ -9,7 +9,7 @@ except IndexError:
 import time
 import locale
 from uuid import uuid4
-from typing import List, Dict, Type, TypeVar
+from typing import List, Dict, Tuple, Type, TypeVar
 from models.player import Player
 from models.round import Round
 from models.match import Match
@@ -33,7 +33,7 @@ class Tournament:
         players=None,
         finish=False,
         id=None,
-        save_points_players: List[float] = None,
+        save_datas_players=None,
     ):
         self.name = name
         self.place = place
@@ -46,8 +46,10 @@ class Tournament:
         self.players: List[Player] = [] if players is None else players
         self.finish: bool = finish
         self.id = str(uuid4()) if id is None else id
-        self.save_points_players: List[float] = (
-            [] if save_points_players is None else save_points_players
+        # This variable is used to save datas (score and list of players
+        # alreay played) when a tournament is finished from players
+        self.save_datas_players: List[Tuple[float, List[int]]] = (
+            [] if save_datas_players is None else save_datas_players
         )
         locale.setlocale(locale.LC_ALL, "fr_FR")
 
@@ -185,7 +187,7 @@ class Tournament:
             "players_in_tournament_ids": players_in_tournament_ids,
             "finish": self.finish,
             "id": self.id,
-            "save_points_players": self.save_points_players,
+            "save_datas_players": self.save_datas_players,
         }
         return serialized_tournament
 
@@ -238,7 +240,7 @@ class Tournament:
         players_in_tournament = players_in_tournament
         finish = serialized_tournament["finish"]
         id = serialized_tournament["id"]
-        save_points_players = serialized_tournament["save_points_players"]
+        save_datas_players = serialized_tournament["save_datas_players"]
         return cls(
             name,
             place,
@@ -251,7 +253,7 @@ class Tournament:
             players_in_tournament,
             finish,
             id,
-            save_points_players,
+            save_datas_players,
         )
 
 

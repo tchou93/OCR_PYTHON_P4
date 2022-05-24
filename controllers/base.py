@@ -287,10 +287,11 @@ class Controller:
                 self.tournament_active.finish = True
                 self.round_active.set_date_end()
                 self.tournament_active.set_date_end()
-                self.tournament_active.save_points_players = [
-                    player.score for player in self.tournament_active.players
+                self.tournament_active.save_datas_players = [
+                    (player.score, player.players_already_played_index)
+                    for player in self.tournament_active.players
                 ]
-                self.reset_score_players(self.tournament_active.players)
+                self.reset_datas_players(self.tournament_active.players)
                 self.view.display_tournament_done()
             elif self.last_match_in_current_round(self.match_active):
                 self.round_active.finish = True
@@ -372,10 +373,12 @@ class Controller:
     # Function used in option
     ##########################
 
-    def reset_score_players(self, players: List[Player]):
-        """Reset all the score of players when the tournament is done."""
+    def reset_datas_players(self, players: List[Player]):
+        """Reset all the scores and lists of players already played
+        for all the players when the tournament is done."""
         for player in players:
             player.score = 0.0
+            player.players_already_played_index = []
 
     def add_actors(self, actors: List[Player]):
         """Add in the list of actor all the Player who are not in this list."""

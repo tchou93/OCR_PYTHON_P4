@@ -180,7 +180,7 @@ class View:
 
         if user_input_option != len(players) + 1:
             user_input_rank = input(
-                "Entrer le nouveau classement pour le joueur"
+                "Entrer le nouveau classement pour le joueur "
                 f"{players[user_input_option-1].first_name} {players[user_input_option-1].last_name}: "
             )
             return (user_input_option, int(user_input_rank))
@@ -575,13 +575,18 @@ class View:
         if not tournament.finish:
             players_sorted_rank = sorted(tournament.players, key=lambda p: p.ranking)
         else:
-            players_with_tournament_scores = copy.deepcopy(tournament.players)
-            for index in range(len(players_with_tournament_scores)):
-                players_with_tournament_scores[
+            players_with_tournament_datas = copy.deepcopy(tournament.players)
+            for index in range(len(players_with_tournament_datas)):
+                (score, players_already_played_index) = tournament.save_datas_players[
                     index
-                ].score = tournament.save_points_players[index]
+                ]
+                players_with_tournament_datas[index].score = score
+                players_with_tournament_datas[
+                    index
+                ].players_already_played_index = players_already_played_index
+
             players_sorted_rank = sorted(
-                players_with_tournament_scores, key=lambda p: p.ranking
+                players_with_tournament_datas, key=lambda p: p.ranking
             )
 
         players_sorted_rank_score = sorted(
